@@ -7,7 +7,6 @@ struct HomeView: View {
     @State private var sortKey = "marketCap"
 
     var body: some View {
-        NavigationView {
             VStack(spacing: 16) {
                 // Featured Coin
                 if let featuredCoin = viewModel.trendingCoins.first {
@@ -101,7 +100,17 @@ struct HomeView: View {
             .task {
                 await viewModel.fetchCoins()
             }
-        }
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    NavigationLink(destination: ProfileView()) {
+                        Image(systemName: "person.circle")
+                            .imageScale(.large)
+                    }
+                }
+            }
+
+        
+        
     }
 
     // Category selection logic
