@@ -56,3 +56,10 @@ enum AppError: LocalizedError, Equatable {
 
 }
 
+/Users/ethan/Desktop/Intro to IOS/ass3/iOS-Assignment-3/Assets.xcassets
+/Users/ethan/Desktop/Intro to IOS/ass3/iOS-Assignment-3/ContentView.swift
+/Users/ethan/Desktop/Intro to IOS/ass3/iOS-Assignment-3/CryptoAppI_App.swift
+/Users/ethan/Desktop/Intro to IOS/ass3/iOS-Assignment-3/Model
+/Users/ethan/Desktop/Intro to IOS/ass3/iOS-Assignment-3/Preview Content
+/Users/ethan/Desktop/Intro to IOS/ass3/iOS-Assignment-3/View
+/Users/ethan/Desktop/Intro to IOS/ass3/iOS-Assignment-3/ViewModel
