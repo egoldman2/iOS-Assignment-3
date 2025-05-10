@@ -2,7 +2,7 @@ import Foundation
 
 class ProfileManager: ObservableObject {
     static let shared = ProfileManager()
-    @Published var profile: UserProfile?
+    @Published var profile: UserAccount?
 
     private let key = "user_profile"
 
@@ -12,7 +12,7 @@ class ProfileManager: ObservableObject {
 
     func loadProfile() {
         if let data = UserDefaults.standard.data(forKey: key),
-           let decoded = try? JSONDecoder().decode(UserProfile.self, from: data) {
+           let decoded = try? JSONDecoder().decode(UserAccount.self, from: data) {
             profile = decoded
         }
     }
@@ -25,8 +25,9 @@ class ProfileManager: ObservableObject {
     }
 
     func createProfile(name: String, email: String, pin: String) {
-        profile = UserProfile(name: name, email: email, pin: pin, holdings: [])
-        saveProfile()
+        profile = UserAccount(email: email, name: name, pin: pin, holdings: [], accountBalance: 0)
+
+            saveProfile()
     }
 
     func updateHoldings(_ holdings: [Holding]) {

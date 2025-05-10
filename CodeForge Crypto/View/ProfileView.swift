@@ -10,6 +10,10 @@ import SwiftUI
 
 struct ProfileView: View {
     @ObservedObject private var manager = ProfileManager.shared
+    @EnvironmentObject var portfolioVM: PortfolioViewModel
+
+
+
 
     var body: some View {
         VStack(spacing: 20) {
@@ -38,7 +42,9 @@ struct ProfileView: View {
                     }
                 }
             } else {
-                Text("No profile found.")
+            // if faild load the mock user
+                JimmyPortfolioView()
+                    .environmentObject(portfolioVM) 
             }
         }
         .padding()

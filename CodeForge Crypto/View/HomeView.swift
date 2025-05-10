@@ -2,6 +2,7 @@ import SwiftUI
 
 struct HomeView: View {
     @StateObject private var viewModel = MarketViewModel()
+    @EnvironmentObject var portfolioVM: PortfolioViewModel
     @State private var selectedCategory = "Trending"
     @State private var isDescending = true
     @State private var sortKey = "marketCap"
@@ -76,7 +77,8 @@ struct HomeView: View {
                 // Coin List Table with Navigation
                 List {
                     ForEach(displayedCoins.prefix(10)) { coin in
-                        NavigationLink(destination: CoinDetailView(viewModel: CoinDetailViewModel(coin: coin))) {
+                        NavigationLink(destination: CoinDetailView(viewModel: CoinDetailViewModel(coin: coin))
+                            .environmentObject(portfolioVM)) {
                             HStack {
                                 Text(coin.name)
                                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -102,7 +104,8 @@ struct HomeView: View {
             }
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    NavigationLink(destination: ProfileView()) {
+                    NavigationLink(destination: ProfileView()
+                        .environmentObject(portfolioVM)) {
                         Image(systemName: "person.circle")
                             .imageScale(.large)
                     }
@@ -126,9 +129,9 @@ struct HomeView: View {
     }
 }
 
-
-#Preview {
-    NavigationStack {
-        HomeView()
-    }
-}
+//
+//#Preview {
+//    NavigationStack {
+//        HomeView()
+//    }
+//}

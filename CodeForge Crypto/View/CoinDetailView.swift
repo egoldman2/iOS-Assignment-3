@@ -2,15 +2,16 @@ import SwiftUI
 import Charts
 
 struct CoinDetailView: View {
-    @ObservedObject private var holdingsManager = HoldingsManager.shared
     @StateObject var viewModel: CoinDetailViewModel
+    @EnvironmentObject var portfolioVM: PortfolioViewModel 
     @State private var selectedRange: ChartRange = .week
     @State private var isLoading = true
-    @State private var showTrade = false
+    @State private var tradeType: TradeType? = nil
 
     var body: some View {
         ScrollView {
             VStack(alignment: .center, spacing: 20) {
+                // Header
                 HStack {
                     AsyncImage(url: URL(string: viewModel.coin.image)) { phase in
                         switch phase {
@@ -30,14 +31,14 @@ struct CoinDetailView: View {
                             EmptyView()
                         }
                     }
+
                     Text(viewModel.coin.name)
                         .font(.title)
                         .fontWeight(.bold)
                         .padding()
                 }
-                
-                
-                // allow the user to select the date for data
+
+                // Date range buttons
                 HStack(spacing: 12) {
                     ForEach(ChartRange.allCases, id: \.self) { range in
                         Button(action: {
@@ -58,7 +59,7 @@ struct CoinDetailView: View {
                     }
                 }
 
-                // history chart
+                // Chart
                 Group {
                     if isLoading {
                         ProgressView("Loading chart...")
@@ -81,56 +82,55 @@ struct CoinDetailView: View {
                         .frame(height: 300)
                     }
                 }
-                
-                let amountHeld = holdingsManager.amount(for: viewModel.coin.id)
-                let totalValue = amountHeld * viewModel.coin.currentPrice
 
-                HStack {
-                    Text("Currently held:")
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .font(.headline)
+                // Holdings (Placeholder)
+                VStack(alignment: .leading, spacing: 8) {
+                   
 
-                    Text("Value:")
-                        .frame(maxWidth: .infinity, alignment: .trailing)
-                        .font(.headline)
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Holdings & Value")
+                            .font(.headline)
+
+                        let holding = portfolioVM.holdings.first(where: { $0.coinID == viewModel.coin.id })
+                        let amount = holding?.amount ?? 0
+                        let value = amount * viewModel.coin.currentPrice
+
+                        HStack {
+                            Text("Amount: \(amount, specifier: "%.4f")")
+                                .frame(maxWidth: .infinity, alignment: .leading)
+
+                            Text("Value: $\(value, specifier: "%.2f")")
+                                .frame(maxWidth: .infinity, alignment: .trailing)
+                        }
+                    }
+                    .padding(.horizontal)
+
                 }
                 .padding(.horizontal)
 
-                HStack {
-                    Text(String(format: "%.4f", amountHeld))
-                        .frame(maxWidth: .infinity, alignment: .leading)
-
-                    Text(String(format: "$%.2f", totalValue))
-                        .frame(maxWidth: .infinity, alignment: .trailing)
-                }
-                .padding(.horizontal)
-                
+                // Buy & Sell buttons
                 HStack(spacing: 20) {
-                    Button(action: {
-                        showTrade = true
-                    }) {
-                        Text("Buy")
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.green)
-                            .foregroundColor(.white)
-                            .cornerRadius(10)
+                    Button("Buy") {
+                        tradeType = .buy
                     }
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(Color.green)
+                    .foregroundColor(.white)
+                    .cornerRadius(10)
 
-                    Button(action: {
-                        showTrade = true
-                    }) {
-                        Text("Sell")
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.red)
-                            .foregroundColor(.white)
-                            .cornerRadius(10)
+                    Button("Sell") {
+                        tradeType = .sell
                     }
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(Color.red)
+                    .foregroundColor(.white)
+                    .cornerRadius(10)
                 }
                 .padding(.horizontal)
 
-                // status
+                // Status info
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Status")
                         .font(.headline)
@@ -155,25 +155,31 @@ struct CoinDetailView: View {
                     .font(.subheadline)
                 }
                 .padding()
-                .frame(maxWidth: .infinity)
                 .background(Color(.systemGray6))
                 .cornerRadius(12)
                 .padding(.bottom, 100)
             }
             .padding(.horizontal)
         }
-
-        
-        .onAppear {
-            Task {
-                isLoading = true
-                await viewModel.loadChartData(for: selectedRange)
-                isLoading = false
+        .navigationTitle("Detail")
+        .navigationBarTitleDisplayMode(.inline)
+        .task {
+            isLoading = true
+            await viewModel.loadChartData(for: selectedRange)
+            isLoading = false
+        }
+        .navigationDestination(isPresented: Binding<Bool>(
+            get: { tradeType != nil },
+            set: { if !$0 { tradeType = nil } }
+        )) {
+            if let tradeType = tradeType {
+                TradeView(coin: viewModel.coin, type: tradeType)
+                    .environmentObject(portfolioVM)
             }
         }
     }
 
-    func formatted(_ value: Double) -> String {
+    private func formatted(_ value: Double) -> String {
         let formatter = NumberFormatter()
         formatter.numberStyle = .decimal
         formatter.maximumFractionDigits = 2
@@ -181,6 +187,3 @@ struct CoinDetailView: View {
     }
 }
 
-#Preview {
-    CoinDetailView(viewModel: CoinDetailViewModel(coin: StaticData[0]))
-}
