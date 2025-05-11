@@ -12,12 +12,9 @@ struct ProfileView: View {
     @ObservedObject private var manager = ProfileManager.shared
     @EnvironmentObject var portfolioVM: PortfolioViewModel
 
-
-
-
     var body: some View {
         VStack(spacing: 20) {
-            if let profile = manager.profile {
+            if let profile = manager.activeProfile {
                 Text("Profile")
                     .font(.largeTitle)
                     .bold()
@@ -49,4 +46,9 @@ struct ProfileView: View {
         }
         .padding()
     }
+}
+
+#Preview {
+    ProfileView()
+        .environmentObject(PortfolioViewModel())
 }

@@ -24,6 +24,13 @@ struct RegistrationView: View {
             SecureField("4-digit PIN", text: $pin)
                 .keyboardType(.numberPad)
                 .textFieldStyle(RoundedBorderTextFieldStyle())
+                .onChange(of: pin) {
+                    // Enforce max 4 digits and numeric only
+                    if pin.count > 4 {
+                        pin = String(pin.prefix(4))
+                    }
+                    pin = pin.filter { $0.isNumber }
+                }
 
             Button(action: {
                 handleRegistration()
@@ -31,7 +38,7 @@ struct RegistrationView: View {
                 Text("Register")
                     .frame(maxWidth: .infinity)
                     .padding()
-                    .background(Color.green)
+                    .background(name.isEmpty || email.isEmpty || pin.count != 4 ? Color.gray : Color.blue)
                     .foregroundColor(.white)
                     .cornerRadius(8)
             }
@@ -61,4 +68,8 @@ struct RegistrationView: View {
             dismiss()
         }
     }
+}
+
+#Preview {
+    RegistrationView()
 }

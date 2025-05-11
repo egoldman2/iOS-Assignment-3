@@ -187,3 +187,7 @@ struct CoinDetailView: View {
     }
 }
 
+#Preview {
+    CoinDetailView(viewModel: CoinDetailViewModel(coin: StaticData[0]))
+        .environmentObject(PortfolioViewModel())
+}

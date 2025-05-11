@@ -8,7 +8,7 @@ struct CryptoAppI_App: App {
     var body: some Scene {
         WindowGroup {
             NavigationStack {       
-                HomeView()
+                WelcomeView()
                     .environmentObject(marketVM)
                     .environmentObject(portfolioVM)
             }

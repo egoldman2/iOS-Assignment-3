@@ -3,13 +3,29 @@ import Foundation
 @MainActor
 class PortfolioViewModel: ObservableObject {
     @Published var portfolio: Portfolio
-    private let storageKey = "jimmy_portfolio"
-
-    init() {
-        self.portfolio = Self.loadPortfolioFromStorage()
+    private var storageKey: String {
+        guard let activeEmail = ProfileManager.shared.activeProfile?.email else {
+            return "default_portfolio"
+        }
+        return "portfolio_\(activeEmail)"
     }
 
+    init() {
+        if let activeEmail = ProfileManager.shared.activeProfile?.email {
+            self.portfolio = Self.loadPortfolioFromStorage(key: "portfolio_\(activeEmail)")
+        } else {
+            self.portfolio = Portfolio(balance: 0, holdings: [], tradeHistory: [])
+        }
 
+        // Listen for profile switches
+        NotificationCenter.default.addObserver(self, selector: #selector(onProfileSwitched), name: NSNotification.Name("ProfileSwitched"), object: nil)
+    }
+
+    @objc private func onProfileSwitched() {
+        if let activeEmail = ProfileManager.shared.activeProfile?.email {
+            self.portfolio = Self.loadPortfolioFromStorage(key: "portfolio_\(activeEmail)")
+        }
+    }
 
     var balanceText: String {
         String(format: "$%.2f", portfolio.balance)
@@ -22,8 +38,6 @@ class PortfolioViewModel: ObservableObject {
     var tradeHistory: [TradeRecord] {
         portfolio.tradeHistory
     }
-
-
 
     func charge(amount: Double) {
         guard amount > 0 else {
@@ -41,7 +55,6 @@ class PortfolioViewModel: ObservableObject {
         savePortfolio()
         print("Portfolio has been reset")
     }
-
 
     func trade(coin: Coin, type: TradeType, amount: Double) -> Bool {
         guard amount > 0 else {
@@ -111,9 +124,6 @@ class PortfolioViewModel: ObservableObject {
         return true
     }
 
-
-
-  
     private func updateHoldings(for coin: Coin, amount: Double) {
         print("Updating holdings...")
         if let index = portfolio.holdings.firstIndex(where: { $0.coinID == coin.id }) {
@@ -133,28 +143,20 @@ class PortfolioViewModel: ObservableObject {
     func savePortfolio() {
         if let encoded = try? JSONEncoder().encode(portfolio) {
             UserDefaults.standard.set(encoded, forKey: storageKey)
-            print("Portfolio saved successfully")
+            print("Portfolio saved successfully for profile: \(storageKey)")
         } else {
             print("Save failed: could not encode portfolio data")
         }
     }
 
-    private static func loadPortfolioFromStorage() -> Portfolio {
-        let key = "jimmy_portfolio"
+    private static func loadPortfolioFromStorage(key: String) -> Portfolio {
         if let data = UserDefaults.standard.data(forKey: key),
            let decoded = try? JSONDecoder().decode(Portfolio.self, from: data) {
-            print("Successfully loaded portfolio from local storage")
+            print("Successfully loaded portfolio for key: \(key)")
             return decoded
         } else {
-            print("No data found, initializing with mock data")
-            return Portfolio(
-                balance: Double(MockUser.jimmy.accountBalance),
-                holdings: MockUser.jimmy.holdings.map {
-                    StoredHolding(coinID: $0.coinID, coinName: $0.coinName, amount: $0.amountHeld)
-                },
-                tradeHistory: []
-            )
+            print("No data found for key: \(key), initializing with empty portfolio")
+            return Portfolio(balance: 0, holdings: [], tradeHistory: [])
         }
     }
 }
-

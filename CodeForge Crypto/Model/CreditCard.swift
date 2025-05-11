@@ -1,17 +1,44 @@
-struct CreditCard {
-    let cardNumber: String
-        let expiryDate: String
-        let cvv: String
-        let password: String
-        let holderName: String
-}
+import Foundation
 
-struct CreditCardData {
-    static let card = CreditCard(
-        cardNumber: "4111111111111111",
-        expiryDate: "12/25",
-        cvv: "123",
-        password: "1234",
-        holderName: "Jimmy Smith"
-    )
+class CreditCard : Codable {
+    let cardNumber: String
+    var expiryDate: Date
+    let cvv: String
+    let holderName: String
+
+    // Initializer with property assignment
+    init(cardNumber: String, expiryDate: Date, cvv: String, holderName: String) {
+        self.cardNumber = cardNumber
+        self.expiryDate = expiryDate
+        self.cvv = cvv
+        self.holderName = holderName
+    }
+    
+    init(cardNumber: String, expiryMonth: String, expiryYear: String, cvv: String, holderName: String) {
+        self.cardNumber = cardNumber
+        self.expiryDate = Date(timeIntervalSince1970: 0)
+        self.cvv = cvv
+        self.holderName = holderName
+        self.expiryDate = convertToDate(month: expiryMonth, year: expiryYear)
+    }
+
+    func convertToDate(month: String, year: String) -> Date {
+        // Validate inputs
+        guard let monthInt = Int(month), (1...12).contains(monthInt),
+              let yearInt = Int(year), year.count == 2 else {
+            return Date(timeIntervalSince1970: 0)
+        }
+
+        // Construct the date string in "MM/YY" format
+        let dateString = "\(month)/\(year)"
+        
+        // Date formatter
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "MM/yy"
+        dateFormatter.timeZone = TimeZone(secondsFromGMT: 0)
+        
+        // Convert to Date
+        return dateFormatter.date(from: dateString) ?? Date(timeIntervalSince1970: 0)
+    }
+    
 }

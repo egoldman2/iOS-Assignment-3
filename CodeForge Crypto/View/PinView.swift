@@ -1,3 +1,11 @@
+//
+//  PinView.swift
+//  CodeForge Crypto
+//
+//  Created by Ethan on 7/5/2025.
+//
+
+
 import SwiftUI
 
 struct PinView: View {
@@ -10,11 +18,14 @@ struct PinView: View {
                 ForEach(0..<4, id: \.self) { index in
                     ZStack {
                         Circle()
-                            .strokeBorder(Color.gray, lineWidth: 1)
+                            .strokeBorder(index == pin.count ? Color.black : Color.gray, lineWidth: 4)
                             .frame(width: 50, height: 50)
 
-                        Text(pin.count > index ? String(pin[pin.index(pin.startIndex, offsetBy: index)]) : "")
-                            .font(.title2)
+                        if pin.count > index {
+                            Circle()
+                                .frame(width: 15, height: 15)
+                                .foregroundColor(.black)
+                        }
                     }
                 }
             }
@@ -26,9 +37,9 @@ struct PinView: View {
                 .focused($isFocused)
                 .frame(width: 1, height: 1)
                 .opacity(0.01) // Invisible but still captures input
-                .onChange(of: pin) { newValue in
-                    if newValue.count > 4 {
-                        pin = String(newValue.prefix(4))
+                .onChange(of: pin) {
+                    if pin.count > 4 {
+                        pin = String(pin.prefix(4))
                     }
                     pin = pin.filter { $0.isNumber }
                 }
@@ -38,5 +49,17 @@ struct PinView: View {
                     }
                 }
         }
+    }
+}
+
+#Preview {
+    StateWrapper()
+}
+
+private struct StateWrapper: View {
+    @State var previewPin = ""
+
+    var body: some View {
+        PinView(pin: $previewPin)
     }
 }

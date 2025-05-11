@@ -34,7 +34,7 @@ struct WelcomeView: View {
                     Spacer()
 
                     Button(action: {
-                        if ProfileManager.shared.profile != nil {
+                        if ProfileManager.shared.activeProfile != nil {
                             navigateToLogin = true
                         } else {
                             navigateToRegistration = true

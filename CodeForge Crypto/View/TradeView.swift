@@ -66,3 +66,8 @@ struct TradeView: View {
     }
 }
 
+#Preview {
+    TradeView(coin: StaticData[0], type: .buy)
+        .environmentObject(PortfolioViewModel())
+}
+

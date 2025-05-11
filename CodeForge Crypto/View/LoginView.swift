@@ -1,59 +1,78 @@
+//
+//  LoginView.swift
+//  CodeForge Crypto
+//
+//  Created by Ethan on 7/5/2025.
+//
+
 import SwiftUI
 
 struct LoginView: View {
     @State private var pin: String = ""
     @State private var isUserAuthenticated = false
-    @State private var showSetPinPrompt = false
-    @AppStorage("userPin") private var storedPin: String?
+    @State private var alertMessage: String = ""
+    @State private var showAlert: Bool = false
 
     var body: some View {
-        VStack(spacing: 20) {
-            Text(isUserAuthenticated ? "Welcome Back!" : "Enter Your PIN")
-                .font(.title2)
-                .bold()
+        NavigationStack {
+            VStack(spacing: 20) {
+                Text("Enter Your PIN")
+                    .font(.title2)
+                    .bold()
 
-            SecureField("Enter 4-digit PIN", text: $pin)
-                .keyboardType(.numberPad)
-                .textFieldStyle(RoundedBorderTextFieldStyle())
-                .frame(width: 200)
+                PinView(pin: $pin)
+                    .onChange(of: pin) {
+                        if pin.count == 4 {
+                            handlePinEntry()
+                        }
+                    }
+                    .navigationDestination(isPresented: $isUserAuthenticated) {
+                        HomeView()
+                            .environmentObject(PortfolioViewModel())
+                    }
 
-            Button(action: {
-                handlePinEntry()
-            }) {
-                Text(isUserAuthenticated ? "Continue" : "Login")
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(Color.blue)
-                    .foregroundColor(.white)
-                    .cornerRadius(8)
+                Button(action: {
+                    handlePinEntry()
+                }) {
+                    Text("Login")
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(pin.count != 4 ? Color.gray : Color.blue)
+                        .foregroundColor(.white)
+                        .cornerRadius(8)
+                }
+                .disabled(pin.count != 4)
+                
             }
-            .disabled(pin.count != 4)
-
-            if showSetPinPrompt {
-                Text("No PIN found, please set your 4-digit PIN:")
-                SecureField("Set PIN", text: $pin)
-                    .keyboardType(.numberPad)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .frame(width: 200)
+            .padding()
+            .alert(isPresented: $showAlert) {
+                Alert(title: Text("Alert"), message: Text(alertMessage), dismissButton: .default(Text("OK")))
             }
-        }
-        .padding()
-        .alert(isPresented: $isUserAuthenticated) {
-            Alert(title: Text("Login Successful"), message: Text("Welcome to CodeForge Crypto!"), dismissButton: .default(Text("Continue")))
         }
     }
 
     private func handlePinEntry() {
-        if let savedPin = storedPin {
-            if pin == savedPin {
+        // Ensure only numeric input and exactly 4 digits
+        guard pin.count == 4, pin.allSatisfy({ $0.isNumber }) else {
+            pin = ""
+            alertMessage = "PIN must be exactly 4 digits and numeric."
+            showAlert = true
+            return
+        }
+
+        // Validate the PIN against the stored profile
+        if let userProfile = ProfileManager.shared.activeProfile {
+            if pin == String(userProfile.pin) {
                 isUserAuthenticated = true
             } else {
+                alertMessage = "Incorrect PIN. \(String(userProfile.pin))"
                 pin = ""
+                showAlert = true
             }
-        } else {
-            showSetPinPrompt = true
-            storedPin = pin
-            isUserAuthenticated = true
         }
     }
+}
+
+#Preview {
+    LoginView()
 }

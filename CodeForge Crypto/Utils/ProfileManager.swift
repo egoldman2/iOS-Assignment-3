@@ -2,41 +2,68 @@ import Foundation
 
 class ProfileManager: ObservableObject {
     static let shared = ProfileManager()
-    @Published var profile: UserAccount?
+    @Published var profiles: [String: UserAccount] = [:]
+    @Published var activeProfile: UserAccount?
 
-    private let key = "user_profile"
+    private let key = "user_profiles"
+    private let activeKey = "active_profile"
 
     private init() {
-        loadProfile()
+        loadProfiles()
     }
 
-    func loadProfile() {
+    func loadProfiles() {
         if let data = UserDefaults.standard.data(forKey: key),
-           let decoded = try? JSONDecoder().decode(UserAccount.self, from: data) {
-            profile = decoded
+           let decoded = try? JSONDecoder().decode([String: UserAccount].self, from: data) {
+            profiles = decoded
+        }
+
+        if let activeEmail = UserDefaults.standard.string(forKey: activeKey) {
+            activeProfile = profiles[activeEmail]
         }
     }
 
-    func saveProfile() {
-        if let profile = profile,
-           let data = try? JSONEncoder().encode(profile) {
+    func saveProfiles() {
+        if let data = try? JSONEncoder().encode(profiles) {
             UserDefaults.standard.set(data, forKey: key)
         }
     }
 
     func createProfile(name: String, email: String, pin: String) {
-        profile = UserAccount(email: email, name: name, pin: pin, holdings: [], accountBalance: 0)
+        let newProfile = UserAccount(email: email, name: name, pin: pin, holdings: [], storedCards: [], accountBalance: 0)
+        profiles[email] = newProfile
+        activeProfile = newProfile
+        UserDefaults.standard.set(email, forKey: activeKey)
+        saveProfiles()
+    }
 
-            saveProfile()
+    func switchProfile(email: String) {
+        if let profile = profiles[email] {
+            activeProfile = profile
+            UserDefaults.standard.set(email, forKey: activeKey)
+        }
+    }
+
+    func deleteProfile(email: String) {
+        profiles.removeValue(forKey: email)
+        if activeProfile?.email == email {
+            activeProfile = nil
+            UserDefaults.standard.removeObject(forKey: activeKey)
+        }
+        saveProfiles()
     }
 
     func updateHoldings(_ holdings: [Holding]) {
-        profile?.holdings = holdings
-        saveProfile()
+        if let email = activeProfile?.email {
+            profiles[email]?.holdings = holdings
+            saveProfiles()
+        }
     }
 
     func addHolding(_ holding: Holding) {
-        profile?.holdings.append(holding)
-        saveProfile()
+        if let email = activeProfile?.email {
+            profiles[email]?.holdings.append(holding)
+            saveProfiles()
+        }
     }
 }

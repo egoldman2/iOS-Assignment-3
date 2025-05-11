@@ -90,3 +90,7 @@ struct JimmyPortfolioView: View {
     }
 }
 
+#Preview {
+    JimmyPortfolioView()
+        .environmentObject(PortfolioViewModel())
+}

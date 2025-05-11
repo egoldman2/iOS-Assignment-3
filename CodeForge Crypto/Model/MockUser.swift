@@ -6,6 +6,7 @@ struct MockUser {
         name: "Jimmy",
         pin: "0000",
         holdings: [],
+        storedCards: [],
         accountBalance: 0
     )
 }
