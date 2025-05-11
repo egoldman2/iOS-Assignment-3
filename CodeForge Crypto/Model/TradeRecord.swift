@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+
 enum TradeType: String, Codable {
     case buy
     case sell
