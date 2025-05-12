@@ -4,8 +4,9 @@ struct HomeView: View {
     @StateObject private var viewModel = MarketViewModel()
     @EnvironmentObject var portfolioVM: PortfolioViewModel
     @State private var selectedCategory = "Trending"
-    @State private var isDescending = true
-    @State private var sortKey = "marketCap"
+    @State private var priceSortDescending = true
+    @State private var changeSortDescending = true
+    @State private var sortKey = ""
 
     var body: some View {
         TabView {
@@ -28,7 +29,7 @@ struct HomeView: View {
                                 VStack(alignment: .leading) {
                                     Text(featuredCoin.name)
                                         .font(.title2).bold()
-                                    Text("$\(String(format: "%.2f", featuredCoin.currentPrice))")
+                                    Text("$\(String(format: "%.2f", featuredCoin.currentPrice)) AUD")
                                         .font(.subheadline)
                                 }
                             }
@@ -43,6 +44,7 @@ struct HomeView: View {
                         ForEach(["Trending", "Top Gainers", "Top Losers"], id: \.self) { category in
                             Button(action: {
                                 selectedCategory = category
+                                sortKey = "" // Reset sort when switching categories
                             }) {
                                 Text(category)
                                     .fontWeight(.medium)
@@ -59,26 +61,52 @@ struct HomeView: View {
                     HStack {
                         Text("Coin")
                             .frame(maxWidth: .infinity, alignment: .leading)
-                        Button("Price") {
-                            sortKey = "price"
-                            isDescending.toggle()
-                            viewModel.sortCoins(by: sortKey, reverse: !isDescending)
-                        }
-                        .frame(width: 80, alignment: .trailing)
                         
-                        Button("Change %") {
-                            sortKey = "change24h"
-                            isDescending.toggle()
-                            viewModel.sortCoins(by: sortKey, reverse: !isDescending)
+                        Button(action: {
+                            if sortKey == "price" {
+                                priceSortDescending.toggle()
+                            } else {
+                                sortKey = "price"
+                                priceSortDescending = true
+                            }
+                        }) {
+                            HStack(spacing: 4) {
+                                Text("Price")
+                                Text("(AUD)")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                if sortKey == "price" {
+                                    Image(systemName: priceSortDescending ? "chevron.down" : "chevron.up")
+                                        .font(.caption)
+                                }
+                            }
                         }
-                        .frame(width: 80, alignment: .trailing)
+                        .frame(width: 100, alignment: .trailing)
+                        
+                        Button(action: {
+                            if sortKey == "change" {
+                                changeSortDescending.toggle()
+                            } else {
+                                sortKey = "change"
+                                changeSortDescending = true
+                            }
+                        }) {
+                            HStack(spacing: 4) {
+                                Text("Change %")
+                                if sortKey == "change" {
+                                    Image(systemName: changeSortDescending ? "chevron.down" : "chevron.up")
+                                        .font(.caption)
+                                }
+                            }
+                        }
+                        .frame(width: 100, alignment: .trailing)
                     }
                     .font(.headline)
                     .padding(.horizontal)
                     
                     // Coin List Table with Navigation
                     List {
-                        ForEach(displayedCoins.prefix(10)) { coin in
+                        ForEach(sortedCoins.prefix(10)) { coin in
                             NavigationLink(destination: CoinDetailView(viewModel: CoinDetailViewModel(coin: coin))
                                 .environmentObject(portfolioVM)) {
                                     HStack {
@@ -86,11 +114,11 @@ struct HomeView: View {
                                             .frame(maxWidth: .infinity, alignment: .leading)
                                         
                                         Text("$\(String(format: "%.2f", coin.currentPrice))")
-                                            .frame(width: 80, alignment: .trailing)
+                                            .frame(width: 100, alignment: .trailing)
                                         
                                         Text("\(String(format: "%.2f", coin.priceChangePercentage24h))%")
                                             .foregroundColor(coin.priceChangePercentage24h >= 0 ? .green : .red)
-                                            .frame(width: 80, alignment: .trailing)
+                                            .frame(width: 100, alignment: .trailing)
                                     }
                                 }
                         }
@@ -128,8 +156,8 @@ struct HomeView: View {
                 Text("Profile")
             }
         }
-        .navigationBarBackButtonHidden(true) // Move this to the TabView level
-        .toolbar(.hidden, for: .navigationBar) // Also hide the entire navigation bar
+        .navigationBarBackButtonHidden(true)
+        .toolbar(.hidden, for: .navigationBar)
     }
 
     // Category selection logic
@@ -141,6 +169,20 @@ struct HomeView: View {
             return viewModel.topLosers
         default:
             return viewModel.trendingCoins
+        }
+    }
+    
+    // Sorted coins based on current sort key
+    private var sortedCoins: [Coin] {
+        let coins = displayedCoins
+        
+        switch sortKey {
+        case "price":
+            return coins.sorted { priceSortDescending ? $0.currentPrice > $1.currentPrice : $0.currentPrice < $1.currentPrice }
+        case "change":
+            return coins.sorted { changeSortDescending ? $0.priceChangePercentage24h > $1.priceChangePercentage24h : $0.priceChangePercentage24h < $1.priceChangePercentage24h }
+        default:
+            return coins // Return unsorted for default view
         }
     }
 }

@@ -99,7 +99,7 @@ struct CoinDetailView: View {
                             Text("Amount: \(amount, specifier: "%.4f")")
                                 .frame(maxWidth: .infinity, alignment: .leading)
 
-                            Text("Value: $\(value, specifier: "%.2f")")
+                            Text("Value: $\(value, specifier: "%.2f") AUD")
                                 .frame(maxWidth: .infinity, alignment: .trailing)
                         }
                     }
@@ -137,7 +137,7 @@ struct CoinDetailView: View {
                         .padding(.bottom, 4)
 
                     Group {
-                        Text("Current Price: $\(formatted(viewModel.coin.currentPrice))")
+                        Text("Current Price: $\(formatted(viewModel.coin.currentPrice)) AUD")
                         Text("Market Cap: $\(formatted(viewModel.coin.marketCap))")
                         Text("Market Cap Change (24h): $\(formatted(viewModel.coin.marketCapChange24h))")
                         Text("Market Cap Change % (24h): \(formatted(viewModel.coin.marketCapChangePercentage24h))%")

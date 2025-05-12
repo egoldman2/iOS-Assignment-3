@@ -5,7 +5,6 @@
 //  Created by Ethan on 7/5/2025.
 //
 
-
 import SwiftUI
 
 struct PinView: View {
@@ -14,22 +13,25 @@ struct PinView: View {
 
     var body: some View {
         VStack {
-            HStack(spacing: 15) {
+            HStack(spacing: 20) {
                 ForEach(0..<4, id: \.self) { index in
                     ZStack {
-                        Circle()
-                            .strokeBorder(index == pin.count ? Color.black : Color.gray, lineWidth: 4)
-                            .frame(width: 50, height: 50)
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(Color.white.opacity(pin.count > index ? 0.2 : 0.1))
+                            .frame(width: 60, height: 60)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 16)
+                                    .stroke(Color.white.opacity(index == pin.count ? 0.6 : 0.2), lineWidth: 2)
+                            )
 
                         if pin.count > index {
-                            Circle()
-                                .frame(width: 15, height: 15)
-                                .foregroundColor(.black)
+                            Text("•")
+                                .font(.system(size: 30, weight: .bold))
+                                .foregroundColor(.white)
                         }
                     }
                 }
             }
-            .padding(.bottom, 10)
 
             // Hidden text field to capture the input
             TextField("", text: $pin)
@@ -53,7 +55,17 @@ struct PinView: View {
 }
 
 #Preview {
-    StateWrapper()
+    ZStack {
+        // Background to see the effect
+        LinearGradient(
+            colors: [Color.purple, Color.blue],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+        .ignoresSafeArea()
+        
+        StateWrapper()
+    }
 }
 
 private struct StateWrapper: View {

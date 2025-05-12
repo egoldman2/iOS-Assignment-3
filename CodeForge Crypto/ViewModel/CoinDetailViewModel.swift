@@ -1,4 +1,3 @@
-
 import Foundation
 
 @MainActor
@@ -42,7 +41,8 @@ class CoinDetailViewModel: ObservableObject {
             return
         }
 
-        let urlString = "https://api.coingecko.com/api/v3/coins/\(coin.id)/market_chart/range?vs_currency=usd&from=\(from)&to=\(to)"
+        // CHANGED: vs_currency=usd to vs_currency=aud
+        let urlString = "https://api.coingecko.com/api/v3/coins/\(coin.id)/market_chart/range?vs_currency=aud&from=\(from)&to=\(to)"
         print("Fetching \(range.label) data from: \(urlString)")
 
         guard let url = URL(string: urlString) else {
@@ -108,4 +108,3 @@ class CoinDetailViewModel: ObservableObject {
         let prices: [[Double]]
     }
 }
-
