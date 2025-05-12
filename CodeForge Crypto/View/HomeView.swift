@@ -3,133 +3,213 @@ import SwiftUI
 struct HomeView: View {
     @StateObject private var viewModel = MarketViewModel()
     @EnvironmentObject var portfolioVM: PortfolioViewModel
+    @State private var selectedTab = 0
     @State private var selectedCategory = "Trending"
-    @State private var priceSortDescending = true
-    @State private var changeSortDescending = true
-    @State private var sortKey = ""
+    @State private var sortBy = ""
+    @State private var sortDescending = true
 
     var body: some View {
-        TabView {
+        TabView(selection: $selectedTab) {
             NavigationStack {
-                VStack(spacing: 16) {
+                VStack {
+                    // Header
+                    HStack {
+                        Image(systemName: "chart.line.uptrend.xyaxis.circle.fill")
+                            .font(.largeTitle)
+                            .foregroundColor(.blue)
+                        
+                        Text("Crypto Market")
+                            .font(.largeTitle)
+                            .bold()
+                    }
+                    .padding()
+                    
                     // Featured Coin
-                    if let featuredCoin = viewModel.trendingCoins.first {
-                        VStack(alignment: .leading) {
-                            Text("🔥 Featured Coin")
+                    if let featuredCoin = viewModel.coins.first {
+                        VStack(spacing: 10) {
+                            Text("Featured Coin")
                                 .font(.headline)
+                                .foregroundColor(.secondary)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                            
                             HStack {
                                 AsyncImage(url: URL(string: featuredCoin.image)) { image in
-                                    image.resizable()
+                                    image
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fit)
                                 } placeholder: {
-                                    Color.gray
+                                    ProgressView()
                                 }
                                 .frame(width: 50, height: 50)
-                                .clipShape(Circle())
                                 
                                 VStack(alignment: .leading) {
                                     Text(featuredCoin.name)
-                                        .font(.title2).bold()
-                                    Text("$\(String(format: "%.2f", featuredCoin.currentPrice)) AUD")
-                                        .font(.subheadline)
+                                        .font(.title2)
+                                        .bold()
+                                    Text(featuredCoin.symbol.uppercased())
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                }
+                                
+                                Spacer()
+                                
+                                VStack(alignment: .trailing) {
+                                    Text("$\(String(format: "%.2f", featuredCoin.currentPrice))")
+                                        .font(.title3)
+                                        .bold()
+                                    HStack {
+                                        Image(systemName: featuredCoin.priceChangePercentage24h >= 0 ? "arrow.up.right" : "arrow.down.right")
+                                            .font(.caption)
+                                        Text("\(String(format: "%.2f", abs(featuredCoin.priceChangePercentage24h)))%")
+                                            .font(.subheadline)
+                                    }
+                                    .foregroundColor(featuredCoin.priceChangePercentage24h >= 0 ? .green : .red)
                                 }
                             }
+                            .padding()
+                            .frame(maxWidth: .infinity)
+                            .background(Color.blue.opacity(0.1))
+                            .cornerRadius(15)
                         }
-                        .padding()
-                        .background(Color(.systemGray6))
-                        .cornerRadius(10)
+                        .padding(.horizontal)
                     }
                     
-                    // Category Buttons
-                    HStack {
+                    // Category Selector
+                    HStack(spacing: 12) {
                         ForEach(["Trending", "Top Gainers", "Top Losers"], id: \.self) { category in
                             Button(action: {
                                 selectedCategory = category
-                                sortKey = "" // Reset sort when switching categories
+                                sortBy = "" // Reset sort when changing category
                             }) {
                                 Text(category)
+                                    .font(.subheadline)
                                     .fontWeight(.medium)
-                                    .padding(8)
-                                    .frame(maxWidth: .infinity)
-                                    .background(selectedCategory == category ? Color.blue.opacity(0.2) : Color.clear)
-                                    .cornerRadius(8)
+                                    .padding(.horizontal, 16)
+                                    .padding(.vertical, 8)
+                                    .background(selectedCategory == category ? Color.blue.opacity(0.2) : Color.gray.opacity(0.1))
+                                    .foregroundColor(selectedCategory == category ? .blue : .primary)
+                                    .cornerRadius(10)
                             }
                         }
                     }
                     .padding(.horizontal)
+                    .padding(.vertical, 8)
                     
-                    // Table Header
+                    // Sort Options
                     HStack {
-                        Text("Coin")
-                            .frame(maxWidth: .infinity, alignment: .leading)
+                        Text("Market Overview")
+                            .font(.headline)
                         
-                        Button(action: {
-                            if sortKey == "price" {
-                                priceSortDescending.toggle()
-                            } else {
-                                sortKey = "price"
-                                priceSortDescending = true
-                            }
-                        }) {
-                            HStack(spacing: 4) {
-                                Text("Price")
-                                Text("(AUD)")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                                if sortKey == "price" {
-                                    Image(systemName: priceSortDescending ? "chevron.down" : "chevron.up")
-                                        .font(.caption)
-                                }
-                            }
-                        }
-                        .frame(width: 100, alignment: .trailing)
+                        Spacer()
                         
-                        Button(action: {
-                            if sortKey == "change" {
-                                changeSortDescending.toggle()
-                            } else {
-                                sortKey = "change"
-                                changeSortDescending = true
-                            }
-                        }) {
-                            HStack(spacing: 4) {
-                                Text("Change %")
-                                if sortKey == "change" {
-                                    Image(systemName: changeSortDescending ? "chevron.down" : "chevron.up")
-                                        .font(.caption)
+                        HStack(spacing: 10) {
+                            Button(action: {
+                                if sortBy == "price" {
+                                    sortDescending.toggle()
+                                } else {
+                                    sortBy = "price"
+                                    sortDescending = true
                                 }
-                            }
-                        }
-                        .frame(width: 100, alignment: .trailing)
-                    }
-                    .font(.headline)
-                    .padding(.horizontal)
-                    
-                    // Coin List Table with Navigation
-                    List {
-                        ForEach(sortedCoins.prefix(10)) { coin in
-                            NavigationLink(destination: CoinDetailView(viewModel: CoinDetailViewModel(coin: coin))
-                                .environmentObject(portfolioVM)) {
-                                    HStack {
-                                        Text(coin.name)
-                                            .frame(maxWidth: .infinity, alignment: .leading)
-                                        
-                                        Text("$\(String(format: "%.2f", coin.currentPrice))")
-                                            .frame(width: 100, alignment: .trailing)
-                                        
-                                        Text("\(String(format: "%.2f", coin.priceChangePercentage24h))%")
-                                            .foregroundColor(coin.priceChangePercentage24h >= 0 ? .green : .red)
-                                            .frame(width: 100, alignment: .trailing)
+                            }) {
+                                HStack(spacing: 4) {
+                                    Text("Price")
+                                        .font(.caption)
+                                    if sortBy == "price" {
+                                        Image(systemName: sortDescending ? "chevron.down" : "chevron.up")
+                                            .font(.caption2)
                                     }
                                 }
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 6)
+                                .background(sortBy == "price" ? Color.blue.opacity(0.2) : Color.gray.opacity(0.1))
+                                .foregroundColor(sortBy == "price" ? .blue : .primary)
+                                .cornerRadius(8)
+                            }
+                            
+                            Button(action: {
+                                if sortBy == "change" {
+                                    sortDescending.toggle()
+                                } else {
+                                    sortBy = "change"
+                                    sortDescending = true
+                                }
+                            }) {
+                                HStack(spacing: 4) {
+                                    Text("24h %")
+                                        .font(.caption)
+                                    if sortBy == "change" {
+                                        Image(systemName: sortDescending ? "chevron.down" : "chevron.up")
+                                            .font(.caption2)
+                                    }
+                                }
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 6)
+                                .background(sortBy == "change" ? Color.blue.opacity(0.2) : Color.gray.opacity(0.1))
+                                .foregroundColor(sortBy == "change" ? .blue : .primary)
+                                .cornerRadius(8)
+                            }
                         }
                     }
-                    .listStyle(.plain)
+                    .padding(.horizontal)
                     
-                    Spacer()
+                    // Coin List
+                    if viewModel.coins.isEmpty {
+                        Spacer()
+                        ProgressView("Loading...")
+                            .padding()
+                        Spacer()
+                    } else {
+                        List(displayedCoins) { coin in
+                            NavigationLink(destination: CoinDetailView(viewModel: CoinDetailViewModel(coin: coin))
+                                .environmentObject(portfolioVM)) {
+                                HStack {
+                                    // Coin image without rank number
+                                    AsyncImage(url: URL(string: coin.image)) { image in
+                                        image
+                                            .resizable()
+                                            .aspectRatio(contentMode: .fit)
+                                    } placeholder: {
+                                        Circle()
+                                            .fill(Color.gray.opacity(0.1))
+                                            .overlay(
+                                                ProgressView()
+                                            )
+                                    }
+                                    .frame(width: 40, height: 40)
+                                    
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text(coin.name)
+                                            .font(.headline)
+                                        Text(coin.symbol.uppercased())
+                                            .font(.caption)
+                                            .foregroundColor(.secondary)
+                                    }
+                                    
+                                    Spacer()
+                                    
+                                    VStack(alignment: .trailing, spacing: 4) {
+                                        Text("$\(String(format: "%.2f", coin.currentPrice))")
+                                            .font(.headline)
+                                        
+                                        HStack(spacing: 4) {
+                                            Image(systemName: coin.priceChangePercentage24h >= 0 ? "arrow.up.right" : "arrow.down.right")
+                                                .font(.caption2)
+                                            Text("\(String(format: "%.2f", abs(coin.priceChangePercentage24h)))%")
+                                                .font(.caption)
+                                                .fontWeight(.medium)
+                                        }
+                                        .foregroundColor(coin.priceChangePercentage24h >= 0 ? .green : .red)
+                                    }
+                                }
+                                .padding(.vertical, 4)
+                            }
+                        }
+                        .listStyle(PlainListStyle())
+                    }
                 }
-                .padding()
-                .navigationTitle("Crypto Market")
                 .task {
+                    // Always fetch fresh data when view appears
+                    viewModel.clearCache()
                     await viewModel.fetchCoins()
                 }
             }
@@ -137,6 +217,7 @@ struct HomeView: View {
                 Image(systemName: "house.fill")
                 Text("Home")
             }
+            .tag(0)
 
             NavigationStack {
                 JimmyPortfolioView()
@@ -146,6 +227,7 @@ struct HomeView: View {
                 Image(systemName: "briefcase.fill")
                 Text("Portfolio")
             }
+            .tag(1)
 
             NavigationStack {
                 ProfileView()
@@ -155,34 +237,53 @@ struct HomeView: View {
                 Image(systemName: "person.fill")
                 Text("Profile")
             }
+            .tag(2)
         }
         .navigationBarBackButtonHidden(true)
         .toolbar(.hidden, for: .navigationBar)
-    }
-
-    // Category selection logic
-    private var displayedCoins: [Coin] {
-        switch selectedCategory {
-        case "Top Gainers":
-            return viewModel.topGainers
-        case "Top Losers":
-            return viewModel.topLosers
-        default:
-            return viewModel.trendingCoins
+        .onAppear {
+            // Listen for going home
+            NotificationCenter.default.addObserver(
+                forName: Notification.Name("GoToHome"),
+                object: nil,
+                queue: .main
+            ) { _ in
+                selectedTab = 0
+            }
+            
+            // If we have too few coins, fetch more
+            if viewModel.coins.count <= StaticData.count {
+                Task {
+                    viewModel.clearCache()
+                    await viewModel.fetchCoins()
+                }
+            }
         }
     }
     
-    // Sorted coins based on current sort key
-    private var sortedCoins: [Coin] {
-        let coins = displayedCoins
+    private var displayedCoins: [Coin] {
+        var coins: [Coin] = []
         
-        switch sortKey {
-        case "price":
-            return coins.sorted { priceSortDescending ? $0.currentPrice > $1.currentPrice : $0.currentPrice < $1.currentPrice }
-        case "change":
-            return coins.sorted { changeSortDescending ? $0.priceChangePercentage24h > $1.priceChangePercentage24h : $0.priceChangePercentage24h < $1.priceChangePercentage24h }
+        // Filter by category
+        switch selectedCategory {
+        case "Trending":
+            coins = viewModel.coins.sorted { $0.marketCap > $1.marketCap }.prefix(10).map { $0 }
+        case "Top Gainers":
+            coins = viewModel.coins.sorted { $0.priceChangePercentage24h > $1.priceChangePercentage24h }.prefix(10).map { $0 }
+        case "Top Losers":
+            coins = viewModel.coins.sorted { $0.priceChangePercentage24h < $1.priceChangePercentage24h }.prefix(10).map { $0 }
         default:
-            return coins // Return unsorted for default view
+            coins = viewModel.coins
+        }
+        
+        // Apply sorting
+        switch sortBy {
+        case "price":
+            return coins.sorted { sortDescending ? $0.currentPrice > $1.currentPrice : $0.currentPrice < $1.currentPrice }
+        case "change":
+            return coins.sorted { sortDescending ? $0.priceChangePercentage24h > $1.priceChangePercentage24h : $0.priceChangePercentage24h < $1.priceChangePercentage24h }
+        default:
+            return coins
         }
     }
 }

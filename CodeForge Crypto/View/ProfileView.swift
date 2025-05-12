@@ -1,5 +1,5 @@
 //
-//  ProfileView 2.swift
+//  ProfileView.swift
 //  CodeForge Crypto
 //
 //  Created by Ethan on 7/5/2025.
@@ -17,80 +17,134 @@ struct ProfileView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 20) {
-                Text("Profile")
-                    .font(.largeTitle)
-                    .bold()
-
-                Text("Name: \(manager.activeProfile?.name ?? "N/A")")
-                Text("Email: \(manager.activeProfile?.email ?? "N/A")")
-                Text("PIN: ****")
-                Divider()
-                
-                Text("Holdings:")
-                    .font(.title2)
-                    .bold()
-                
-                List(manager.activeProfile?.holdings ?? []) { holding in
-                    HStack {
-                        Text(holding.coinSymbol)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                        Text("\(holding.amountHeld, specifier: "%.4f")")
-                            .frame(width: 80, alignment: .trailing)
-                        Text(String(format: "$%.2f", holding.totalValueUSD))
-                            .frame(width: 100, alignment: .trailing)
-                    }
+                // Profile Header
+                HStack {
+                    Image(systemName: "person.circle.fill")
+                        .font(.largeTitle)
+                        .foregroundColor(.blue)
+                    
+                    Text("Profile")
+                        .font(.largeTitle)
+                        .bold()
                 }
+                .padding()
                 
-                // Action Buttons
+                // User Info Card
                 VStack(spacing: 15) {
-                    // Lock Button
-                    Button(action: {
-                        navigateToPinLock = true
-                    }) {
+                    // Avatar
+                    ZStack {
+                        Circle()
+                            .fill(Color.blue.opacity(0.2))
+                            .frame(width: 80, height: 80)
+                        
+                        Text(manager.activeProfile?.name.prefix(1).uppercased() ?? "?")
+                            .font(.system(size: 36, weight: .bold))
+                            .foregroundColor(.blue)
+                    }
+                    
+                    VStack(spacing: 8) {
+                        Text(manager.activeProfile?.name ?? "N/A")
+                            .font(.title2)
+                            .bold()
+                        
+                        Text(manager.activeProfile?.email ?? "N/A")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                        
                         HStack {
                             Image(systemName: "lock.fill")
-                            Text("Lock App")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            Text("PIN: ****")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
                         }
-                        .frame(maxWidth: .infinity)
+                    }
+                }
+                .frame(maxWidth: .infinity)
+                .padding()
+                .background(Color(.systemGray6))
+                .cornerRadius(15)
+                .padding(.horizontal)
+                
+                // Action Buttons
+                VStack(spacing: 12) {
+                    // Recharge Button
+                    NavigationLink(destination: RechargeView().environmentObject(portfolioVM)) {
+                        HStack {
+                            Image(systemName: "creditcard.fill")
+                                .font(.system(size: 20))
+                            Text("Recharge Account")
+                                .font(.headline)
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 14))
+                                .foregroundColor(.secondary)
+                        }
                         .padding()
-                        .background(Color.orange)
-                        .foregroundColor(.white)
-                        .cornerRadius(8)
+                        .background(Color.green.opacity(0.1))
+                        .foregroundColor(.green)
+                        .cornerRadius(10)
+                    }
+                    
+                    // Lock Button
+                    Button(action: { navigateToPinLock = true }) {
+                        HStack {
+                            Image(systemName: "lock.fill")
+                                .font(.system(size: 20))
+                            Text("Lock App")
+                                .font(.headline)
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 14))
+                                .foregroundColor(.secondary)
+                        }
+                        .padding()
+                        .background(Color.orange.opacity(0.1))
+                        .foregroundColor(.orange)
+                        .cornerRadius(10)
                     }
                     
                     // Sign Out Button
-                    Button(action: {
-                        signOut()
-                    }) {
+                    Button(action: signOut) {
                         HStack {
                             Image(systemName: "arrow.right.square.fill")
+                                .font(.system(size: 20))
                             Text("Sign Out")
+                                .font(.headline)
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 14))
+                                .foregroundColor(.secondary)
                         }
-                        .frame(maxWidth: .infinity)
                         .padding()
-                        .background(Color.blue)
-                        .foregroundColor(.white)
-                        .cornerRadius(8)
+                        .background(Color.blue.opacity(0.1))
+                        .foregroundColor(.blue)
+                        .cornerRadius(10)
                     }
                     
                     // Delete Account Button
-                    Button(action: {
-                        showDeleteConfirmation = true
-                    }) {
+                    Button(action: { showDeleteConfirmation = true }) {
                         HStack {
                             Image(systemName: "trash.fill")
+                                .font(.system(size: 20))
                             Text("Delete Account")
+                                .font(.headline)
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 14))
+                                .foregroundColor(.secondary)
                         }
-                        .frame(maxWidth: .infinity)
                         .padding()
-                        .background(Color.red)
-                        .foregroundColor(.white)
-                        .cornerRadius(8)
+                        .background(Color.red.opacity(0.1))
+                        .foregroundColor(.red)
+                        .cornerRadius(10)
                     }
                 }
                 .padding(.horizontal)
+                
+                Spacer()
             }
-            .padding()
             .alert("Delete Account", isPresented: $showDeleteConfirmation) {
                 Button("Cancel", role: .cancel) { }
                 Button("Delete", role: .destructive) {
@@ -111,37 +165,19 @@ struct ProfileView: View {
     }
     
     private func signOut() {
-        // IMPORTANT: Don't clear the profile data from storage
-        // Just remove the active profile reference
-        
-        // Save any pending changes before signing out
-        manager.saveProfiles()
-        
-        // Clear only the active session, not the stored profile
         manager.activeProfile = nil
         UserDefaults.standard.removeObject(forKey: "active_profile")
-        
-        // Navigate back to welcome screen
+        portfolioVM.resetPortfolio()
         navigateToWelcome = true
     }
     
     private func deleteAccount() {
         guard let email = manager.activeProfile?.email else { return }
-        
-        // This is where we actually delete the account permanently
         manager.deleteProfile(email: email)
-        
-        // Clear portfolio data from UserDefaults for this user
         let portfolioKey = "portfolio_\(email)"
         UserDefaults.standard.removeObject(forKey: portfolioKey)
-        
-        // Clear any other user-specific data
         UserDefaults.standard.removeObject(forKey: "active_profile")
-        
-        // Reset portfolio view model
         portfolioVM.resetPortfolio()
-        
-        // Navigate back to welcome screen
         navigateToWelcome = true
     }
 }

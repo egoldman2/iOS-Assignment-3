@@ -11,10 +11,11 @@ struct TradeView: View {
     @State private var amountText: String = ""
     @State private var valueText: String = ""
     @State private var inputMode: InputMode = .amount
-    @State private var goToPortfolio = false
     @State private var showError = false
     @State private var errorMessage = ""
     @State private var showPercentageButtons = true
+    @State private var showConfirmation = false
+    @State private var confirmationMessage = ""
     
     enum InputMode: String, CaseIterable {
         case amount = "Amount"
@@ -281,14 +282,18 @@ struct TradeView: View {
             }
             .navigationTitle("Trade")
             .navigationBarTitleDisplayMode(.inline)
-            .navigationDestination(isPresented: $goToPortfolio) {
-                JimmyPortfolioView()
-                    .environmentObject(portfolioVM)
-            }
             .alert("Trade Failed", isPresented: $showError) {
                 Button("OK", role: .cancel) { }
             } message: {
                 Text(errorMessage)
+            }
+            .alert("Trade Successful", isPresented: $showConfirmation) {
+                Button("OK") {
+                    // Just go home
+                    NotificationCenter.default.post(name: Notification.Name("GoToHome"), object: nil)
+                }
+            } message: {
+                Text(confirmationMessage)
             }
         }
     }
@@ -392,11 +397,15 @@ struct TradeView: View {
 
         let success = portfolioVM.trade(coin: coin, type: type, amount: amount)
         if success {
-            print("Trade successful")
-            goToPortfolio = true
+            // Create confirmation message
+            let action = type == .buy ? "Bought" : "Sold"
+            let totalValue = amount * coin.currentPrice
+            confirmationMessage = "\(action) \(String(format: "%.6f", amount)) \(coin.symbol.uppercased()) for $\(String(format: "%.2f", totalValue)) AUD"
+            
+            // Show confirmation
+            showConfirmation = true
         } else {
             errorMessage = "Trade failed. Please try again."
-            print("Trade failed")
             showError = true
         }
     }

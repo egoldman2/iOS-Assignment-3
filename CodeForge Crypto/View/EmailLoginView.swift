@@ -135,12 +135,7 @@ struct EmailLoginView: View {
                     .disabled(!isValidInput)
                     .padding(.horizontal, 40)
                     
-                    // Forgot PIN
-                    Button(action: {}) {
-                        Text("Forgot your PIN?")
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(.white.opacity(0.8))
-                    }
+                   
                     
                     Spacer(minLength: 50)
                 }

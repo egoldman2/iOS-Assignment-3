@@ -3,14 +3,15 @@ import Charts
 
 struct CoinDetailView: View {
     @StateObject var viewModel: CoinDetailViewModel
-    @EnvironmentObject var portfolioVM: PortfolioViewModel 
+    @EnvironmentObject var portfolioVM: PortfolioViewModel
     @State private var selectedRange: ChartRange = .week
     @State private var isLoading = true
     @State private var tradeType: TradeType? = nil
+    @Environment(\.dismiss) var dismiss
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .center, spacing: 20) {
+            VStack(spacing: 20) {
                 // Header
                 HStack {
                     AsyncImage(url: URL(string: viewModel.coin.image)) { phase in
@@ -35,8 +36,8 @@ struct CoinDetailView: View {
                     Text(viewModel.coin.name)
                         .font(.title)
                         .fontWeight(.bold)
-                        .padding()
                 }
+                .padding()
 
                 // Date range buttons
                 HStack(spacing: 12) {
@@ -50,62 +51,55 @@ struct CoinDetailView: View {
                             }
                         }) {
                             Text(range.label)
-                                .fontWeight(.medium)
-                                .padding(.vertical, 6)
-                                .padding(.horizontal, 12)
-                                .background(selectedRange == range ? Color.blue.opacity(0.2) : Color.gray.opacity(0.1))
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 8)
+                                .background(selectedRange == range ? Color.blue : Color.gray.opacity(0.2))
+                                .foregroundColor(selectedRange == range ? .white : .primary)
                                 .cornerRadius(8)
                         }
                     }
                 }
 
                 // Chart
-                Group {
-                    if isLoading {
-                        ProgressView("Loading chart...")
-                            .frame(height: 300)
-                    } else if viewModel.coinHistoryChartData.isEmpty {
-                        Text("No chart data available.")
-                            .foregroundColor(.gray)
-                            .frame(height: 300)
-                    } else {
-                        let minPrice = viewModel.coinHistoryChartData.map(\.price).min() ?? 0
-                        let maxPrice = viewModel.coinHistoryChartData.map(\.price).max() ?? 1
-
-                        Chart(viewModel.coinHistoryChartData) { point in
-                            LineMark(
-                                x: .value("Date", point.time),
-                                y: .value("Price", point.price)
-                            )
-                        }
-                        .chartYScale(domain: minPrice...maxPrice)
-                        .frame(height: 300)
+                if isLoading {
+                    ProgressView("Loading...")
+                        .frame(height: 250)
+                } else if viewModel.coinHistoryChartData.isEmpty {
+                    Text("No chart data")
+                        .foregroundColor(.secondary)
+                        .frame(height: 250)
+                } else {
+                    Chart(viewModel.coinHistoryChartData) { point in
+                        LineMark(
+                            x: .value("Date", point.time),
+                            y: .value("Price", point.price)
+                        )
                     }
+                    .frame(height: 250)
+                    .padding(.horizontal)
                 }
 
-                // Holdings (Placeholder)
-                VStack(alignment: .leading, spacing: 8) {
-                   
+                // Holdings section
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Your Holdings")
+                        .font(.headline)
+                        .padding(.horizontal)
 
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Holdings & Value")
-                            .font(.headline)
+                    let holding = portfolioVM.holdings.first(where: { $0.coinID == viewModel.coin.id })
+                    let amount = holding?.amount ?? 0
+                    let value = amount * viewModel.coin.currentPrice
 
-                        let holding = portfolioVM.holdings.first(where: { $0.coinID == viewModel.coin.id })
-                        let amount = holding?.amount ?? 0
-                        let value = amount * viewModel.coin.currentPrice
-
-                        HStack {
-                            Text("Amount: \(amount, specifier: "%.4f")")
-                                .frame(maxWidth: .infinity, alignment: .leading)
-
-                            Text("Value: $\(value, specifier: "%.2f") AUD")
-                                .frame(maxWidth: .infinity, alignment: .trailing)
-                        }
+                    HStack {
+                        Text("Amount: \(amount, specifier: "%.4f")")
+                        Spacer()
+                        Text("Value: $\(value, specifier: "%.2f") AUD")
                     }
                     .padding(.horizontal)
-
+                    .font(.subheadline)
                 }
+                .padding()
+                .background(Color(.systemGray6))
+                .cornerRadius(10)
                 .padding(.horizontal)
 
                 // Buy & Sell buttons
@@ -130,36 +124,113 @@ struct CoinDetailView: View {
                 }
                 .padding(.horizontal)
 
-                // Status info
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Status")
+                // Simple Status section
+                VStack(alignment: .leading, spacing: 15) {
+                    Text("Market Stats")
                         .font(.headline)
-                        .padding(.bottom, 4)
-
-                    Group {
-                        Text("Current Price: $\(formatted(viewModel.coin.currentPrice)) AUD")
-                        Text("Market Cap: $\(formatted(viewModel.coin.marketCap))")
-                        Text("Market Cap Change (24h): $\(formatted(viewModel.coin.marketCapChange24h))")
-                        Text("Market Cap Change % (24h): \(formatted(viewModel.coin.marketCapChangePercentage24h))%")
-                        Text("Total Volume (24h): $\(formatted(viewModel.coin.totalVolume))")
-                        Text("24h High: $\(formatted(viewModel.coin.high24h))")
-                        Text("24h Low: $\(formatted(viewModel.coin.low24h))")
-                        Text("Price Change (24h): $\(formatted(viewModel.coin.priceChange24h))")
-                        Text("Price Change % (24h): \(formatted(viewModel.coin.priceChangePercentage24h))%")
-                        Text("Circulating Supply: \(formatted(viewModel.coin.circulatingSupply))")
-                        Text("Total Supply: \(formatted(viewModel.coin.totalSupply))")
-                        Text("Max Supply: \(formatted(viewModel.coin.maxSupply ?? 0))")
-                        Text("All-Time High: $\(formatted(viewModel.coin.ath))")
-                        Text("All-Time Low: $\(formatted(viewModel.coin.atl))")
+                        .padding(.horizontal)
+                    
+                    VStack(spacing: 12) {
+                        // Current Price
+                        HStack {
+                            Text("Current Price:")
+                            Spacer()
+                            Text("$\(String(format: "%.2f", viewModel.coin.currentPrice)) AUD")
+                                .fontWeight(.semibold)
+                        }
+                        
+                        // 24h Change
+                        HStack {
+                            Text("24h Change:")
+                            Spacer()
+                            HStack(spacing: 4) {
+                                Image(systemName: viewModel.coin.priceChangePercentage24h >= 0 ? "arrow.up" : "arrow.down")
+                                    .font(.caption)
+                                Text("\(String(format: "%.2f", abs(viewModel.coin.priceChangePercentage24h)))%")
+                            }
+                            .foregroundColor(viewModel.coin.priceChangePercentage24h >= 0 ? .green : .red)
+                        }
+                        
+                        // Market Cap
+                        HStack {
+                            Text("Market Cap:")
+                            Spacer()
+                            Text("$\(formatNumber(viewModel.coin.marketCap))")
+                        }
+                        
+                        // 24h Volume
+                        HStack {
+                            Text("24h Volume:")
+                            Spacer()
+                            Text("$\(formatNumber(viewModel.coin.totalVolume))")
+                        }
+                        
+                        Divider()
+                        
+                        // High/Low
+                        HStack {
+                            Text("24h High:")
+                            Spacer()
+                            Text("$\(String(format: "%.2f", viewModel.coin.high24h))")
+                                .foregroundColor(.green)
+                        }
+                        
+                        HStack {
+                            Text("24h Low:")
+                            Spacer()
+                            Text("$\(String(format: "%.2f", viewModel.coin.low24h))")
+                                .foregroundColor(.red)
+                        }
+                        
+                        Divider()
+                        
+                        // Supply
+                        HStack {
+                            Text("Circulating Supply:")
+                            Spacer()
+                            Text("\(formatNumber(viewModel.coin.circulatingSupply))")
+                        }
+                        
+                        HStack {
+                            Text("Total Supply:")
+                            Spacer()
+                            Text("\(formatNumber(viewModel.coin.totalSupply))")
+                        }
+                        
+                        if let maxSupply = viewModel.coin.maxSupply {
+                            HStack {
+                                Text("Max Supply:")
+                                Spacer()
+                                Text("\(formatNumber(maxSupply))")
+                            }
+                        }
+                        
+                        Divider()
+                        
+                        // All-time high/low
+                        HStack {
+                            Text("All-Time High:")
+                            Spacer()
+                            Text("$\(String(format: "%.2f", viewModel.coin.ath))")
+                                .foregroundColor(.green)
+                        }
+                        
+                        HStack {
+                            Text("All-Time Low:")
+                            Spacer()
+                            Text("$\(String(format: "%.2f", viewModel.coin.atl))")
+                                .foregroundColor(.red)
+                        }
                     }
                     .font(.subheadline)
+                    .padding(.horizontal)
                 }
-                .padding()
+                .padding(.vertical)
                 .background(Color(.systemGray6))
-                .cornerRadius(12)
-                .padding(.bottom, 100)
+                .cornerRadius(10)
+                .padding(.horizontal)
+                .padding(.bottom, 50)
             }
-            .padding(.horizontal)
         }
         .navigationTitle("Detail")
         .navigationBarTitleDisplayMode(.inline)
@@ -177,13 +248,22 @@ struct CoinDetailView: View {
                     .environmentObject(portfolioVM)
             }
         }
+        .onReceive(NotificationCenter.default.publisher(for: Notification.Name("GoToHome"))) { _ in
+            dismiss()
+        }
     }
 
-    private func formatted(_ value: Double) -> String {
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .decimal
-        formatter.maximumFractionDigits = 2
-        return formatter.string(from: NSNumber(value: value)) ?? "-"
+    // Simple number formatter
+    private func formatNumber(_ number: Double) -> String {
+        if number >= 1_000_000_000 {
+            return String(format: "%.1fB", number / 1_000_000_000)
+        } else if number >= 1_000_000 {
+            return String(format: "%.1fM", number / 1_000_000)
+        } else if number >= 1_000 {
+            return String(format: "%.1fK", number / 1_000)
+        } else {
+            return String(format: "%.0f", number)
+        }
     }
 }
 
