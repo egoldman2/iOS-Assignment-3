@@ -1,7 +1,6 @@
 import Foundation
 
 enum AppError: LocalizedError, Equatable {
-    
 
     case invalidEmail
     case passwordTooShort

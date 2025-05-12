@@ -111,12 +111,15 @@ struct ProfileView: View {
     }
     
     private func signOut() {
-        // Clear active profile but keep the account in storage
+        // IMPORTANT: Don't clear the profile data from storage
+        // Just remove the active profile reference
+        
+        // Save any pending changes before signing out
+        manager.saveProfiles()
+        
+        // Clear only the active session, not the stored profile
         manager.activeProfile = nil
         UserDefaults.standard.removeObject(forKey: "active_profile")
-        
-        // Reset portfolio data for the current session
-        portfolioVM.resetPortfolio()
         
         // Navigate back to welcome screen
         navigateToWelcome = true
@@ -125,7 +128,7 @@ struct ProfileView: View {
     private func deleteAccount() {
         guard let email = manager.activeProfile?.email else { return }
         
-        // Delete the account from ProfileManager
+        // This is where we actually delete the account permanently
         manager.deleteProfile(email: email)
         
         // Clear portfolio data from UserDefaults for this user

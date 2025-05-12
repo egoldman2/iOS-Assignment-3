@@ -24,6 +24,11 @@ class ProfileManager: ObservableObject {
     }
 
     func saveProfiles() {
+        // Update the stored profile with current active profile data before saving
+        if let email = activeProfile?.email {
+            profiles[email] = activeProfile
+        }
+        
         if let data = try? JSONEncoder().encode(profiles) {
             UserDefaults.standard.set(data, forKey: key)
         }
@@ -38,9 +43,15 @@ class ProfileManager: ObservableObject {
     }
 
     func switchProfile(email: String) {
+        // Save current profile before switching
+        if let currentEmail = activeProfile?.email {
+            profiles[currentEmail] = activeProfile
+        }
+        
         if let profile = profiles[email] {
             activeProfile = profile
             UserDefaults.standard.set(email, forKey: activeKey)
+            saveProfiles()
         }
     }
 
@@ -55,6 +66,7 @@ class ProfileManager: ObservableObject {
 
     func updateHoldings(_ holdings: [Holding]) {
         if let email = activeProfile?.email {
+            activeProfile?.holdings = holdings
             profiles[email]?.holdings = holdings
             saveProfiles()
         }
@@ -62,10 +74,25 @@ class ProfileManager: ObservableObject {
 
     func addHolding(_ holding: Holding) {
         if let email = activeProfile?.email {
+            activeProfile?.holdings.append(holding)
             profiles[email]?.holdings.append(holding)
             saveProfiles()
         }
     }
     
+    func updateStoredCards(_ cards: [CreditCard]) {
+        if let email = activeProfile?.email {
+            activeProfile?.storedCards = cards
+            profiles[email]?.storedCards = cards
+            saveProfiles()
+        }
+    }
     
+    func addStoredCard(_ card: CreditCard) {
+        if let email = activeProfile?.email {
+            activeProfile?.storedCards.append(card)
+            profiles[email]?.storedCards.append(card)
+            saveProfiles()
+        }
+    }
 }
