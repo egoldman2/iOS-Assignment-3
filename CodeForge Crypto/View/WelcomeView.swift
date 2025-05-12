@@ -10,6 +10,7 @@ import SwiftUI
 struct WelcomeView: View {
     @State private var navigateToLogin = false
     @State private var navigateToRegistration = false
+    @State private var navigateToPinEntry = false
 
     var body: some View {
         NavigationStack {
@@ -33,33 +34,67 @@ struct WelcomeView: View {
 
                     Spacer()
 
-                    Button(action: {
+                    // Always show login and register options
+                    VStack(spacing: 20) {
+                        // If user has an active profile, go directly to PIN
                         if ProfileManager.shared.activeProfile != nil {
-                            navigateToLogin = true
-                        } else {
-                            navigateToRegistration = true
+                            Button(action: {
+                                navigateToPinEntry = true
+                            }) {
+                                Text("Continue with PIN")
+                                    .font(.headline)
+                                    .foregroundColor(.white)
+                                    .padding()
+                                    .frame(maxWidth: .infinity)
+                                    .background(Color.green.opacity(0.8))
+                                    .cornerRadius(12)
+                                    .shadow(color: .black.opacity(0.3), radius: 5, x: 0, y: 3)
+                            }
                         }
-                    }) {
-                        Text("Get Started / Login")
-                            .font(.headline)
-                            .foregroundColor(.white)
-                            .padding()
-                            .frame(maxWidth: .infinity, maxHeight: 100)
-                            .background(Color.blue.opacity(0.8))
-                            .cornerRadius(12)
-                            .shadow(color: .black.opacity(0.3), radius: 5, x: 0, y: 3)
+                        
+                        Button(action: {
+                            navigateToLogin = true
+                        }) {
+                            Text("Login with Email")
+                                .font(.headline)
+                                .foregroundColor(.white)
+                                .padding()
+                                .frame(maxWidth: .infinity)
+                                .background(Color.blue.opacity(0.8))
+                                .cornerRadius(12)
+                                .shadow(color: .black.opacity(0.3), radius: 5, x: 0, y: 3)
+                        }
+                        
+                        Button(action: {
+                            navigateToRegistration = true
+                        }) {
+                            Text("Create New Account")
+                                .font(.headline)
+                                .foregroundColor(.white)
+                                .padding()
+                                .frame(maxWidth: .infinity)
+                                .background(Color.green.opacity(0.8))
+                                .cornerRadius(12)
+                                .shadow(color: .black.opacity(0.3), radius: 5, x: 0, y: 3)
+                        }
                     }
                     .padding(.horizontal, 40)
 
                     Spacer()
                 }
                 .navigationDestination(isPresented: $navigateToLogin) {
-                    LoginView()
+                    EmailLoginView()
                 }
                 .navigationDestination(isPresented: $navigateToRegistration) {
                     RegistrationView()
                 }
+                .navigationDestination(isPresented: $navigateToPinEntry) {
+                    LoginView()
+                }
             }
+        }
+        .onAppear {
+            ProfileManager.shared.loadProfiles()
         }
     }
 }

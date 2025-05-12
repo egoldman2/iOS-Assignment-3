@@ -7,12 +7,26 @@ struct CryptoAppI_App: App {
 
     var body: some Scene {
         WindowGroup {
-            NavigationStack {       
+            NavigationStack {
                 WelcomeView()
                     .environmentObject(marketVM)
                     .environmentObject(portfolioVM)
+            }
+            .onAppear {
+                // Load saved profiles on app launch
+                ProfileManager.shared.loadProfiles()
             }
         }
     }
 }
 
+// Add this extension here
+extension CryptoAppI_App {
+    func rootView() -> some View {
+        NavigationStack {
+            WelcomeView()
+                .environmentObject(MarketViewModel())
+                .environmentObject(PortfolioViewModel())
+        }
+    }
+}

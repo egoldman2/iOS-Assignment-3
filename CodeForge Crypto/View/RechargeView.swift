@@ -25,6 +25,7 @@ struct NumberOnlyTextField: View {
 
 struct RechargeView: View {
     @EnvironmentObject var portfolioVM: PortfolioViewModel
+    @Environment(\.dismiss) var dismiss  // Add this
 
     @State private var number = ""
     @State private var name = ""
@@ -36,7 +37,7 @@ struct RechargeView: View {
     @State private var amount = ""
 
     @State private var showError = false
-    @State private var goToPortfolio = false
+    @State private var showSuccessAlert = false  // Add this
 
     // States for bottom sheet presentation
     @State private var showMonthPicker = false
@@ -55,15 +56,14 @@ struct RechargeView: View {
                 .foregroundColor(.gray)
                 .multilineTextAlignment(.center)
             
-            if let storedCards = ProfileManager.shared.activeProfile?.storedCards{
+            if let storedCards = ProfileManager.shared.activeProfile?.storedCards, !storedCards.isEmpty {
                 Text("Saved Cards")
                 
                 List(storedCards, id: \.cardNumber) { card in
-                    Text(card.cardNumber.suffix(4))
+                    Text("•••• " + card.cardNumber.suffix(4))
                 }
-                
+                .frame(maxHeight: 100)
             }
-
 
             Group {
                 Text("Add a New Card")
@@ -117,7 +117,7 @@ struct RechargeView: View {
                     Spacer()
                     
                     NumberOnlyTextField(text: $cvv, maxLength: 3, placeholder: "CVV (3 digits)")
-                        .frame(width: .infinity)
+                        .frame(width: 100)
                 }
             }
 
@@ -129,9 +129,13 @@ struct RechargeView: View {
 
             Button("Pay") {
                 if isCardInfoCorrect(), let value = Double(amount), value > 0 {
-                    ProfileManager.shared.activeProfile?.storedCards.append(CreditCard(cardNumber: number, expiryMonth: expiryMonth, expiryYear: expiryYear, cvv: cvv, holderName: name))
+                    if saveCard {
+                        ProfileManager.shared.activeProfile?.storedCards.append(
+                            CreditCard(cardNumber: number, expiryMonth: expiryMonth, expiryYear: expiryYear, cvv: cvv, holderName: name)
+                        )
+                    }
                     portfolioVM.charge(amount: value)
-                    goToPortfolio = true
+                    showSuccessAlert = true
                 } else {
                     showError = true
                 }
@@ -149,9 +153,12 @@ struct RechargeView: View {
         } message: {
             Text("Please check your card number, expiry, CVV, or password.")
         }
-        .navigationDestination(isPresented: $goToPortfolio) {
-            JimmyPortfolioView()
-                .environmentObject(portfolioVM)
+        .alert("Success", isPresented: $showSuccessAlert) {
+            Button("OK") {
+                dismiss()  // Go back to portfolio
+            }
+        } message: {
+            Text("$\(amount) has been added to your account.")
         }
     }
 
@@ -167,6 +174,8 @@ struct RechargeView: View {
 }
 
 #Preview {
-    RechargeView()
-        .environmentObject(PortfolioViewModel())
+    NavigationStack {
+        RechargeView()
+            .environmentObject(PortfolioViewModel())
+    }
 }

@@ -113,7 +113,6 @@ struct HomeView: View {
             NavigationStack {
                 JimmyPortfolioView()
                     .environmentObject(portfolioVM)
-                    .navigationBarBackButtonHidden(true)
             }
             .tabItem {
                 Image(systemName: "briefcase.fill")
@@ -129,6 +128,8 @@ struct HomeView: View {
                 Text("Profile")
             }
         }
+        .navigationBarBackButtonHidden(true) // Move this to the TabView level
+        .toolbar(.hidden, for: .navigationBar) // Also hide the entire navigation bar
     }
 
     // Category selection logic

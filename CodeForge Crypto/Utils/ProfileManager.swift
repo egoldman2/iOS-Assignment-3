@@ -66,4 +66,6 @@ class ProfileManager: ObservableObject {
             saveProfiles()
         }
     }
+    
+    
 }

@@ -1,21 +1,26 @@
+//
+//  EmailLoginView.swift
+//  CodeForge Crypto
+//
+//  Created by Ethan on 12/5/2025.
+//
+
+
 import SwiftUI
 
-struct RegistrationView: View {
-    @State private var name: String = ""
+struct EmailLoginView: View {
     @State private var email: String = ""
     @State private var pin: String = ""
     @State private var showAlert = false
     @State private var alertMessage = ""
     @State private var navigateToHome = false
+    @ObservedObject private var profileManager = ProfileManager.shared
 
     var body: some View {
         VStack(spacing: 20) {
-            Text("Create a New Profile")
+            Text("Login to Your Account")
                 .font(.title2)
                 .bold()
-
-            TextField("Full Name", text: $name)
-                .textFieldStyle(RoundedBorderTextFieldStyle())
 
             TextField("Email Address", text: $email)
                 .keyboardType(.emailAddress)
@@ -33,56 +38,55 @@ struct RegistrationView: View {
                 }
 
             Button(action: {
-                handleRegistration()
+                handleLogin()
             }) {
-                Text("Register")
+                Text("Login")
                     .frame(maxWidth: .infinity)
                     .padding()
-                    .background(name.isEmpty || email.isEmpty || pin.count != 4 ? Color.gray : Color.blue)
+                    .background(isValidInput ? Color.blue : Color.gray)
                     .foregroundColor(.white)
                     .cornerRadius(8)
             }
-            .disabled(name.isEmpty || email.isEmpty || pin.count != 4)
+            .disabled(!isValidInput)
         }
         .padding()
+        .navigationTitle("Login")
+        .alert(isPresented: $showAlert) {
+            Alert(title: Text("Alert"), message: Text(alertMessage), dismissButton: .default(Text("OK")))
+        }
         .navigationDestination(isPresented: $navigateToHome) {
             HomeView()
-                .environmentObject(PortfolioViewModel())  // Create new instance
+                .environmentObject(PortfolioViewModel())
                 .navigationBarBackButtonHidden(true)
-                .toolbar(.hidden, for: .navigationBar)
-        }
-        .alert(isPresented: $showAlert) {
-            Alert(
-                title: Text(alertMessage == "Account created successfully!" ? "Success" : "Error"),
-                message: Text(alertMessage),
-                dismissButton: .default(Text("OK")) {
-                    if alertMessage == "Account created successfully!" {
-                        navigateToHome = true
-                    }
-                }
-            )
         }
     }
 
-    private func handleRegistration() {
+    private var isValidInput: Bool {
+        !email.isEmpty && pin.count == 4
+    }
+
+    private func handleLogin() {
         guard pin.allSatisfy({ $0.isNumber }) else {
             alertMessage = "PIN must be numeric."
             showAlert = true
             return
         }
 
-        if ProfileManager.shared.profiles[email] != nil {
-            alertMessage = "An account with this email already exists."
+        // Find the profile with matching email
+        if let profile = profileManager.profiles[email] {
+            // Verify PIN
+            if profile.pin == pin {
+                // Successful login
+                profileManager.switchProfile(email: email)
+                navigateToHome = true
+            } else {
+                alertMessage = "Incorrect PIN."
+                showAlert = true
+                pin = ""
+            }
+        } else {
+            alertMessage = "No account found with this email."
             showAlert = true
-            return
         }
-
-        ProfileManager.shared.createProfile(name: name, email: email, pin: pin)
-        alertMessage = "Account created successfully!"
-        showAlert = true
     }
-}
-
-#Preview {
-    RegistrationView()
 }

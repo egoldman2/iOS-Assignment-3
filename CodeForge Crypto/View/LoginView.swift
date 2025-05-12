@@ -12,10 +12,19 @@ struct LoginView: View {
     @State private var isUserAuthenticated = false
     @State private var alertMessage: String = ""
     @State private var showAlert: Bool = false
+    @State private var navigateToWelcome = false
+    @ObservedObject private var profileManager = ProfileManager.shared
 
     var body: some View {
         NavigationStack {
             VStack(spacing: 20) {
+                if let profile = profileManager.activeProfile {
+                    Text("Welcome back, \(profile.name)!")
+                        .font(.title2)
+                        .bold()
+                        .padding(.bottom, 20)
+                }
+
                 Text("Enter Your PIN")
                     .font(.title2)
                     .bold()
@@ -25,10 +34,6 @@ struct LoginView: View {
                         if pin.count == 4 {
                             handlePinEntry()
                         }
-                    }
-                    .navigationDestination(isPresented: $isUserAuthenticated) {
-                        HomeView()
-                            .environmentObject(PortfolioViewModel())
                     }
 
                 Button(action: {
@@ -43,16 +48,35 @@ struct LoginView: View {
                 }
                 .disabled(pin.count != 4)
                 
+                // Switch Account button
+                Button(action: {
+                    profileManager.activeProfile = nil
+                    UserDefaults.standard.removeObject(forKey: "active_profile")
+                    pin = ""
+                    navigateToWelcome = true
+                }) {
+                    Text("Switch Account")
+                        .foregroundColor(.blue)
+                }
+                .padding(.top, 20)
             }
             .padding()
             .alert(isPresented: $showAlert) {
                 Alert(title: Text("Alert"), message: Text(alertMessage), dismissButton: .default(Text("OK")))
             }
+            .navigationDestination(isPresented: $isUserAuthenticated) {
+                HomeView()
+                    .environmentObject(PortfolioViewModel())
+                    .navigationBarBackButtonHidden(true)
+            }
+            .navigationDestination(isPresented: $navigateToWelcome) {
+                WelcomeView()
+                    .navigationBarBackButtonHidden(true)
+            }
         }
     }
 
     private func handlePinEntry() {
-        // Ensure only numeric input and exactly 4 digits
         guard pin.count == 4, pin.allSatisfy({ $0.isNumber }) else {
             pin = ""
             alertMessage = "PIN must be exactly 4 digits and numeric."
@@ -60,15 +84,17 @@ struct LoginView: View {
             return
         }
 
-        // Validate the PIN against the stored profile
-        if let userProfile = ProfileManager.shared.activeProfile {
-            if pin == String(userProfile.pin) {
+        if let userProfile = profileManager.activeProfile {
+            if pin == userProfile.pin {
                 isUserAuthenticated = true
             } else {
-                alertMessage = "Incorrect PIN. \(String(userProfile.pin))"
+                alertMessage = "Incorrect PIN."
                 pin = ""
                 showAlert = true
             }
+        } else {
+            alertMessage = "No active profile found."
+            showAlert = true
         }
     }
 }

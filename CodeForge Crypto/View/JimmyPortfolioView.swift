@@ -3,6 +3,7 @@ import SwiftUI
 struct JimmyPortfolioView: View {
     @EnvironmentObject var viewModel: PortfolioViewModel
     @State private var showRecharge = false
+    @State private var goToHome = false
 
     var body: some View {
         ScrollView {
@@ -68,29 +69,45 @@ struct JimmyPortfolioView: View {
                     }
                 }
 
-                Button("Recharge via Bank") {
-                    showRecharge = true
+                NavigationLink(destination: RechargeView()
+                    .environmentObject(viewModel)) {
+                    Text("Recharge via Bank")
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.blue)
+                        .foregroundColor(.white)
+                        .cornerRadius(10)
                 }
-                .buttonStyle(.borderedProminent)
-                .padding(.top, 10)
+                .padding(.horizontal)
 
                 Spacer(minLength: 40)
             }
             .padding()
         }
-        .navigationTitle("")
+        .navigationTitle("Portfolio")
         .navigationBarTitleDisplayMode(.inline)
-        .navigationDestination(isPresented: $showRecharge) {
-            RechargeView()
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button("Done") {
+                    goToHome = true
+                }
+            }
+        }
+        .navigationDestination(isPresented: $goToHome) {
+            HomeView()
                 .environmentObject(viewModel)
+                .navigationBarBackButtonHidden(true)
+                .toolbar(.hidden, for: .navigationBar)
         }
         .onAppear {
-            print("✅ JimmyPortfolioView ")
+            print("✅ JimmyPortfolioView")
         }
     }
 }
 
 #Preview {
-    JimmyPortfolioView()
-        .environmentObject(PortfolioViewModel())
+    NavigationStack {
+        JimmyPortfolioView()
+            .environmentObject(PortfolioViewModel())
+    }
 }

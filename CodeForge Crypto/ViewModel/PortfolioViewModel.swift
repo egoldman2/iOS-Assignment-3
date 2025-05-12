@@ -26,6 +26,16 @@ class PortfolioViewModel: ObservableObject {
             self.portfolio = Self.loadPortfolioFromStorage(key: "portfolio_\(activeEmail)")
         }
     }
+    
+    // Add this method
+    func resetAndReload() {
+        if let activeEmail = ProfileManager.shared.activeProfile?.email {
+            self.portfolio = Self.loadPortfolioFromStorage(key: "portfolio_\(activeEmail)")
+        } else {
+            self.portfolio = Portfolio(balance: 0, holdings: [], tradeHistory: [])
+        }
+        objectWillChange.send()
+    }
 
     var balanceText: String {
         String(format: "$%.2f", portfolio.balance)
