@@ -72,7 +72,7 @@ struct LoginView: View {
                             .foregroundColor(.white.opacity(0.9))
                         
                         // Custom PIN View with modern styling
-                        ModernPinView(pin: $pin)
+                        PinView(pin: $pin)
                             .onChange(of: pin) { _, _ in
                                 if pin.count == 4 {
                                     handlePinEntry()
@@ -162,59 +162,6 @@ struct LoginView: View {
         } else {
             alertMessage = "No active profile found."
             showAlert = true
-        }
-    }
-}
-
-// Modern PIN View with glass morphism and strict validation
-struct ModernPinView: View {
-    @Binding var pin: String
-    @FocusState private var isFocused: Bool
-
-    var body: some View {
-        VStack {
-            HStack(spacing: 20) {
-                ForEach(0..<4, id: \.self) { index in
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 16)
-                            .fill(Color.white.opacity(pin.count > index ? 0.2 : 0.1))
-                            .frame(width: 60, height: 60)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 16)
-                                    .stroke(Color.white.opacity(index == pin.count ? 0.6 : 0.2), lineWidth: 2)
-                            )
-
-                        if pin.count > index {
-                            Text("•")
-                                .font(.system(size: 30, weight: .bold))
-                                .foregroundColor(.white)
-                        }
-                    }
-                }
-            }
-
-            // Hidden text field with strict numeric validation
-            TextField("", text: $pin)
-                .keyboardType(.numberPad)
-                .focused($isFocused)
-                .frame(width: 1, height: 1)
-                .opacity(0.01)
-                .onChange(of: pin) { _, newValue in
-                    // Only allow numbers
-                    let filtered = newValue.filter { "0123456789".contains($0) }
-                    
-                    // Limit to exactly 4 digits
-                    if filtered.count > 4 {
-                        pin = String(filtered.prefix(4))
-                    } else {
-                        pin = filtered
-                    }
-                }
-                .onAppear {
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                        isFocused = true
-                    }
-                }
         }
     }
 }
