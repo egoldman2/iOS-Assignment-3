@@ -25,7 +25,7 @@ class CreditCard : Codable {
     func convertToDate(month: String, year: String) -> Date {
         // Validate inputs
         guard let monthInt = Int(month), (1...12).contains(monthInt),
-              let yearInt = Int(year), year.count == 2 else {
+              let _ = Int(year), year.count == 2 else {
             return Date(timeIntervalSince1970: 0)
         }
 

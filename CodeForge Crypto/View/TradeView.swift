@@ -1,6 +1,9 @@
 import SwiftUI
 import Charts
 
+// TradeView is a UI for buying or selling a specific coin. 
+// It allows the user to input amount or value, shows relevant stats and summaries, 
+// and handles confirmation with appropriate validations and feedback.
 struct TradeView: View {
     let coin: Coin
     let type: TradeType
@@ -22,6 +25,8 @@ struct TradeView: View {
         case value = "Value (AUD)"
     }
 
+    // Main View body, containing UI layout including coin info, input fields,
+    // percentage selectors, trade summary, and confirm button.
     var body: some View {
         NavigationStack {
             ZStack {
@@ -298,6 +303,7 @@ struct TradeView: View {
         }
     }
     
+    // Validates whether the entered trade amount is acceptable based on current holdings or balance.
     private var isValidInput: Bool {
         guard let amount = Double(amountText), amount > 0 else { return false }
         
@@ -314,6 +320,7 @@ struct TradeView: View {
         return true
     }
     
+    // Converts large numeric values into abbreviated string formats (K, M, B).
     private func formatLargeNumber(_ number: Double) -> String {
         if number >= 1_000_000_000 {
             return String(format: "%.1fB", number / 1_000_000_000)
@@ -326,6 +333,7 @@ struct TradeView: View {
         }
     }
     
+    // Sets the trade amount/value based on a selected percentage of available balance or holdings.
     private func selectPercentage(_ percentage: Int) {
         if type == .buy {
             // For buying, calculate based on available balance
@@ -343,6 +351,7 @@ struct TradeView: View {
         }
     }
     
+    // Converts a given crypto amount into equivalent AUD value.
     private func updateValueFromAmount(_ amountString: String) {
         guard !amountString.isEmpty,
               let amount = Double(amountString) else {
@@ -354,6 +363,7 @@ struct TradeView: View {
         valueText = String(format: "%.2f", value)
     }
     
+    // Converts a given AUD value into equivalent crypto amount.
     private func updateAmountFromValue(_ valueString: String) {
         guard !valueString.isEmpty,
               let value = Double(valueString),
@@ -366,6 +376,8 @@ struct TradeView: View {
         amountText = String(format: "%.6f", amount)
     }
 
+    // Handles the trade confirmation logic: validates inputs again, attempts trade,
+    // and shows success/failure alerts with appropriate messages.
     private func confirmTrade() {
         guard let amount = Double(amountText), amount > 0 else {
             errorMessage = "Invalid amount entered"

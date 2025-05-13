@@ -8,11 +8,14 @@
 import SwiftUI
 
 struct PinView: View {
+    // PinView renders a 4-digit PIN input as a row of stylized circles.
+    // Each circle shows a filled dot if a digit has been entered.
     @Binding var pin: String
     @FocusState private var isFocused: Bool
 
     var body: some View {
         VStack {
+            // Create four PIN input circles with visual feedback based on index and pin length
             HStack(spacing: 20) {
                 ForEach(0..<4, id: \.self) { index in
                     ZStack {
@@ -36,6 +39,7 @@ struct PinView: View {
     }
 }
 
+// Preview showing PinView over a gradient background using a wrapper for state binding
 #Preview {
     ZStack {
         // Background to see the effect
@@ -50,6 +54,7 @@ struct PinView: View {
     }
 }
 
+// A helper view that provides a @State binding for use in the PinView preview
 private struct StateWrapper: View {
     @State var previewPin = ""
 

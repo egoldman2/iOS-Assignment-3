@@ -1,5 +1,7 @@
 import Foundation
 
+// PortfolioViewModel manages the user's portfolio data including balance, holdings, and trade history.
+// It supports charging, trading, resetting, and saving/loading portfolio state tied to the active profile.
 @MainActor
 class PortfolioViewModel: ObservableObject {
     @Published var portfolio: Portfolio
@@ -10,6 +12,8 @@ class PortfolioViewModel: ObservableObject {
         return "portfolio_\(activeEmail)"
     }
 
+    // Initializes the portfolio based on the active user profile.
+    // Also sets up a listener to handle profile switches and reload the corresponding portfolio.
     init() {
         if let activeEmail = ProfileManager.shared.activeProfile?.email {
             self.portfolio = Self.loadPortfolioFromStorage(key: "portfolio_\(activeEmail)")
@@ -28,6 +32,7 @@ class PortfolioViewModel: ObservableObject {
     }
     
     // Add this method
+    // Reloads the portfolio data based on the current active profile, replacing any in-memory changes.
     func resetAndReload() {
         if let activeEmail = ProfileManager.shared.activeProfile?.email {
             self.portfolio = Self.loadPortfolioFromStorage(key: "portfolio_\(activeEmail)")
@@ -37,18 +42,22 @@ class PortfolioViewModel: ObservableObject {
         objectWillChange.send()
     }
 
+    // Computed properties to expose formatted balance, holdings list, and trade history.
     var balanceText: String {
         String(format: "$%.2f", portfolio.balance)
     }
 
+    // Computed properties to expose formatted balance, holdings list, and trade history.
     var holdings: [StoredHolding] {
         portfolio.holdings
     }
 
+    // Computed properties to expose formatted balance, holdings list, and trade history.
     var tradeHistory: [TradeRecord] {
         portfolio.tradeHistory
     }
 
+    // Adds the specified amount to the balance, then saves the updated portfolio.
     func charge(amount: Double) {
         guard amount > 0 else {
             print("Charge failed: Invalid amount (\(amount))")
@@ -60,12 +69,15 @@ class PortfolioViewModel: ObservableObject {
         print("Charge successful: $\(amount), new balance: $\(portfolio.balance)")
     }
 
+    // Clears all portfolio data and saves the empty portfolio.
     func resetPortfolio() {
         portfolio = Portfolio(balance: 0, holdings: [], tradeHistory: [])
         savePortfolio()
         print("Portfolio has been reset")
     }
 
+    // Handles buying or selling a specific coin.
+    // Validates inputs, updates holdings and balance, appends a trade record, and saves the portfolio.
     func trade(coin: Coin, type: TradeType, amount: Double) -> Bool {
         guard amount > 0 else {
             print("Trade failed: Invalid amount (\(amount))")
@@ -134,6 +146,8 @@ class PortfolioViewModel: ObservableObject {
         return true
     }
 
+    // Adds to or removes from coin holdings depending on trade type.
+    // If the coin doesn't exist in holdings, it creates a new entry.
     private func updateHoldings(for coin: Coin, amount: Double) {
         print("Updating holdings...")
         if let index = portfolio.holdings.firstIndex(where: { $0.coinID == coin.id }) {
@@ -150,6 +164,7 @@ class PortfolioViewModel: ObservableObject {
         }
     }
 
+    // Encodes and saves the portfolio to UserDefaults using the profile-specific key.
     func savePortfolio() {
         if let encoded = try? JSONEncoder().encode(portfolio) {
             UserDefaults.standard.set(encoded, forKey: storageKey)

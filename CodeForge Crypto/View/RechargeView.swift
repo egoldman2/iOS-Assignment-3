@@ -60,6 +60,8 @@ struct SavedCardRow: View {
 }
 
 struct RechargeView: View {
+    // RechargeView allows users to top up their account using a credit card.
+    // Supports both saved cards and adding new cards with expiry, CVV, and save options.
     @EnvironmentObject var portfolioVM: PortfolioViewModel
     @Environment(\.dismiss) var dismiss
     @ObservedObject private var profileManager = ProfileManager.shared
@@ -92,6 +94,7 @@ struct RechargeView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 20) {
+                // Page header with title and disclaimer text
                 // Header
                 VStack(spacing: 8) {
                     Text("💳 Credit Card Recharge")
@@ -106,6 +109,7 @@ struct RechargeView: View {
                 }
                 .padding(.top)
                 
+                // Input for recharge amount using a numeric-only text field
                 // Amount field (always visible)
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Amount to Recharge")
@@ -115,6 +119,7 @@ struct RechargeView: View {
                 }
                 .padding(.horizontal)
                 
+                // Display user's saved credit cards with option to select or add a new one
                 // Saved Cards Section
                 if !savedCards.isEmpty {
                     VStack(alignment: .leading, spacing: 12) {
@@ -155,6 +160,7 @@ struct RechargeView: View {
                     .padding(.vertical)
                 }
                 
+                // Display new card input fields when no saved cards or user chooses to add a new one
                 // New Card Section
                 if savedCards.isEmpty || useNewCard {
                     VStack(alignment: .leading, spacing: 16) {
@@ -208,6 +214,7 @@ struct RechargeView: View {
                     .padding(.horizontal)
                 }
                 
+                // Pay button to submit recharge request using selected or entered card info
                 // Pay Button
                 Button(action: handlePayment) {
                     HStack {
@@ -229,17 +236,21 @@ struct RechargeView: View {
             }
         }
         .navigationTitle("Recharge")
+        // Show month picker sheet for expiry selection
         .sheet(isPresented: $showMonthPicker) {
             monthPickerView
         }
+        // Show year picker sheet for expiry selection
         .sheet(isPresented: $showYearPicker) {
             yearPickerView
         }
+        // Show error alert if card information is invalid
         .alert("Card Info Incorrect", isPresented: $showError) {
             Button("OK", role: .cancel) { }
         } message: {
             Text("Please check your card number, expiry, CVV, or password.")
         }
+        // Show success alert after recharge is processed
         .alert("Success", isPresented: $showSuccessAlert) {
             Button("OK") {
                 dismiss()
@@ -294,7 +305,7 @@ struct RechargeView: View {
     private var canProceedWithPayment: Bool {
         guard let amountValue = Double(amount), amountValue > 0 else { return false }
         
-        if let selectedCard = selectedCard, !useNewCard {
+        if let _ = selectedCard, !useNewCard {
             // Using saved card
             return true
         } else {
@@ -303,6 +314,8 @@ struct RechargeView: View {
         }
     }
     
+    // Process payment with either selected saved card or newly entered card info
+    // Validates input, saves new card if chosen, and updates balance
     private func handlePayment() {
         guard let value = Double(amount), value > 0 else {
             showError = true

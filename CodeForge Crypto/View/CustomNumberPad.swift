@@ -5,16 +5,20 @@
 //  Created by Ethan on 13/5/2025.
 //
 
-
 import SwiftUI
 
+// A reusable number pad view used for PIN entry.
+// Displays digits 0–9 and a delete button in a grid layout.
+// Input is passed back via the @Binding `pin`.
 struct CustomNumberPad: View {
     @Binding var pin: String
     
+    // Defines the grid layout (3 columns)
     let gridItems = [
         GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())
     ]
     
+    // Button labels for the number pad layout
     let buttons = [
         "1", "2", "3",
         "4", "5", "6",
@@ -23,6 +27,7 @@ struct CustomNumberPad: View {
     ]
     
     var body: some View {
+        // Displays buttons in a grid; each button either appends a digit to the PIN or deletes the last digit.
         LazyVGrid(columns: gridItems, spacing: 15) {
             ForEach(buttons, id: \.self) { button in
                 if button != "" {
@@ -35,6 +40,7 @@ struct CustomNumberPad: View {
                             }
                         }
                     }) {
+                        // Circular button with glass-like styling
                         Text(button)
                             .font(.system(size: 24))
                             .foregroundColor(.white)
@@ -61,7 +67,6 @@ struct CustomNumberPad: View {
 }
 
 #Preview {
-    @State var pin = ""
-    
+    @Previewable @State var pin = ""
     CustomNumberPad(pin: $pin)
 }

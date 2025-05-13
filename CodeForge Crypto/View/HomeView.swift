@@ -1,6 +1,9 @@
 import SwiftUI
 
 struct HomeView: View {
+    // HomeView displays the main tabbed interface for the app, showing the crypto market,
+    // user's portfolio, and profile. It fetches market data, allows sorting/filtering,
+    // and displays featured coins and a list of coins.
     @StateObject private var viewModel = MarketViewModel()
     @EnvironmentObject var portfolioVM: PortfolioViewModel
     @State private var selectedTab = 0
@@ -8,9 +11,11 @@ struct HomeView: View {
     @State private var sortBy = ""
     @State private var sortDescending = true
 
+    // Main tab view with three tabs: Home, Portfolio, and Profile.
     var body: some View {
         TabView(selection: $selectedTab) {
             NavigationStack {
+                // Home tab content: header, featured coin, category filter, sort options, and coin list.
                 VStack {
                     // Header
                     HStack {
@@ -24,7 +29,7 @@ struct HomeView: View {
                     }
                     .padding()
                     
-                    // Featured Coin
+                    // Display a featured coin card if one exists.
                     if let featuredCoin = viewModel.coins.first {
                         VStack(spacing: 10) {
                             Text("Featured Coin")
@@ -74,7 +79,7 @@ struct HomeView: View {
                         .padding(.horizontal)
                     }
                     
-                    // Category Selector
+                    // Toggle buttons to filter coin list by "Trending", "Top Gainers", or "Top Losers".
                     HStack(spacing: 12) {
                         ForEach(["Trending", "Top Gainers", "Top Losers"], id: \.self) { category in
                             Button(action: {
@@ -95,7 +100,7 @@ struct HomeView: View {
                     .padding(.horizontal)
                     .padding(.vertical, 8)
                     
-                    // Sort Options
+                    // Buttons to sort coins by price or 24h % change, with toggleable direction.
                     HStack {
                         Text("Market Overview")
                             .font(.headline)
@@ -152,7 +157,8 @@ struct HomeView: View {
                     }
                     .padding(.horizontal)
                     
-                    // Coin List
+                    // List of displayed coins based on selected category and sort option.
+                    // Each row navigates to a detailed view of the selected coin.
                     if viewModel.coins.isEmpty {
                         Spacer()
                         ProgressView("Loading...")
@@ -207,6 +213,7 @@ struct HomeView: View {
                         .listStyle(PlainListStyle())
                     }
                 }
+                // Fetch coins when the view appears.
                 .task {
                     // Always fetch fresh data when view appears
                     viewModel.clearCache()
@@ -241,6 +248,7 @@ struct HomeView: View {
         }
         .navigationBarBackButtonHidden(true)
         .toolbar(.hidden, for: .navigationBar)
+        // Listen for navigation events and conditionally refresh coin data if cache is small.
         .onAppear {
             // Listen for going home
             NotificationCenter.default.addObserver(
@@ -261,6 +269,8 @@ struct HomeView: View {
         }
     }
     
+    // Computes which coins to show based on selected category and sort criteria.
+    // Limits to top 10 coins for certain categories.
     private var displayedCoins: [Coin] {
         var coins: [Coin] = []
         

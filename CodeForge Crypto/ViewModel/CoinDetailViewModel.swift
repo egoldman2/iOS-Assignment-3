@@ -52,7 +52,7 @@ class CoinDetailViewModel: ObservableObject {
 
         do {
             let (data, response) = try await URLSession.shared.data(from: url)
-//check if the http response and print out the respons
+            //check if the http response and print out the respons
             if let httpResponse = response as? HTTPURLResponse {
                 print("HTTP Status Code: \(httpResponse.statusCode)")
             }
@@ -73,9 +73,9 @@ class CoinDetailViewModel: ObservableObject {
                     return nil
                 }
             }
-// transefer the return data to the model structure which we defined.
+            // transefer the return data to the model structure which we defined.
             self.coinHistoryChartData = parsedData
-//if the return data is empty switch to static data.
+            // if the return data is empty switch to static data.
             if parsedData.isEmpty {
                 print("No chart data received. Using static fallback.")
                 self.coinHistoryChartData = StaticChartPoints

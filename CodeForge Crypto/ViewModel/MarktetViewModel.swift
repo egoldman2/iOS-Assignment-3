@@ -2,11 +2,14 @@ import Foundation
 
 @MainActor
 class MarketViewModel: ObservableObject {
+    // MarketViewModel handles fetching, caching, sorting, and filtering of coin market data.
+    // It interacts with the CoinGecko API and provides backup static data in case of failure.
     @Published var coins: [Coin] = []
     @Published var searchText: String = ""
     private(set) var hasLoaded: Bool = false
 
-    //
+    // Fetches coin market data from the CoinGecko API (only once unless cache is cleared).
+    // Falls back to static data if the fetch or decoding fails.
     func fetchCoins() async {
         guard !hasLoaded else {
             print("Skipped fetchCoins: already loaded.")
@@ -34,6 +37,7 @@ class MarketViewModel: ObservableObject {
         }
     }
 
+    // Handles errors during API fetch by loading static backup data.
     private func handle(error: AppError) {
         print(" Error: \(error.localizedDescription)")
         self.coins = StaticData
@@ -43,6 +47,7 @@ class MarketViewModel: ObservableObject {
     }
 
 
+    // Clears current coin data and resets the loaded flag to allow fresh API fetch.
     func clearCache() {
         self.coins = []
         self.hasLoaded = false
@@ -50,6 +55,8 @@ class MarketViewModel: ObservableObject {
     }
 
 
+    // Sorts coins by specified key such as market cap, price, volume, or 24h change.
+    // Supports optional reverse sorting.
     func sortCoins(by key: String, reverse: Bool = false) {
         let sortedCoins: [Coin]
         switch key {
@@ -69,18 +76,22 @@ class MarketViewModel: ObservableObject {
     }
 
 
+    // Top 10 coins sorted by market cap descending.
     var trendingCoins: [Coin] {
         coins.sorted(by: { $0.marketCap > $1.marketCap }).prefix(10).map { $0 }
     }
 
+    // Top 10 coins sorted by 24h price change descending.
     var topGainers: [Coin] {
         coins.sorted(by: { $0.priceChangePercentage24h > $1.priceChangePercentage24h }).prefix(10).map { $0 }
     }
 
+    // Top 10 coins sorted by 24h price change ascending.
     var topLosers: [Coin] {
         coins.sorted(by: { $0.priceChangePercentage24h < $1.priceChangePercentage24h }).prefix(10).map { $0 }
     }
 
+    // Filters coins based on user-entered search text (matches name or symbol).
     var filteredCoins: [Coin] {
         if searchText.isEmpty {
             return coins
@@ -89,4 +100,3 @@ class MarketViewModel: ObservableObject {
         }
     }
 }
-

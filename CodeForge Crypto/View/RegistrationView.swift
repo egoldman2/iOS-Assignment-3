@@ -1,6 +1,8 @@
 import SwiftUI
 
 struct RegistrationView: View {
+    // RegistrationView allows a new user to create an account by entering name, email, and a 4-digit PIN.
+    // It performs validation, shows inline feedback, and navigates to HomeView upon successful registration.
     @State private var name: String = ""
     @State private var email: String = ""
     @State private var pin: String = ""
@@ -13,6 +15,7 @@ struct RegistrationView: View {
     @State private var showEmailError = false
 
     var body: some View {
+        // Background gradient and glass overlay for visual styling
         ZStack {
             // Background gradient
             LinearGradient(
@@ -30,7 +33,7 @@ struct RegistrationView: View {
             
             ScrollView {
                 VStack(spacing: 30) {
-                    // Header
+                    // Page header with icon, title, and subtitle
                     VStack(spacing: 16) {
                         Image(systemName: "person.badge.plus.fill")
                             .font(.system(size: 80))
@@ -54,7 +57,7 @@ struct RegistrationView: View {
                     .padding(.top, 60)
                     .padding(.bottom, 20)
                     
-                    // Input Fields
+                    // Input section: name, email (with validation), and PIN fields with visual feedback
                     VStack(spacing: 20) {
                         // Name Field
                         VStack(alignment: .leading, spacing: 8) {
@@ -162,7 +165,7 @@ struct RegistrationView: View {
                     }
                     .padding(.horizontal, 40)
                     
-                    // Register Button
+                    // Register button; only enabled when all inputs are valid
                     Button(action: handleRegistration) {
                         Text("Create Account")
                             .font(.system(size: 18, weight: .semibold))
@@ -182,7 +185,7 @@ struct RegistrationView: View {
                     .disabled(!isValidInput)
                     .padding(.horizontal, 40)
                     
-                    // Terms
+                    // Informational text about agreement disclaimer
                     Text("By continuing, you agree to HODL responsibly 🚀")
                         .font(.system(size: 12))
                         .foregroundColor(.white.opacity(0.7))
@@ -194,12 +197,14 @@ struct RegistrationView: View {
             }
         }
         .navigationBarTitleDisplayMode(.inline)
+        // Navigate to HomeView after successful registration
         .navigationDestination(isPresented: $navigateToHome) {
             HomeView()
                 .environmentObject(PortfolioViewModel())
                 .navigationBarBackButtonHidden(true)
                 .toolbar(.hidden, for: .navigationBar)
         }
+        // Alert for success or error messages on registration
         .alert(isPresented: $showAlert) {
             Alert(
                 title: Text(alertMessage == "Account created successfully!" ? "Success" : "Error"),
@@ -216,15 +221,18 @@ struct RegistrationView: View {
         }
     }
 
+    // Checks if all registration input fields are valid
     private var isValidInput: Bool {
         !name.isEmpty && isValidEmail(email) && pin.count == 4
     }
 
+    // Validates email format using regular expression
     private func isValidEmail(_ email: String) -> Bool {
         let emailRegex = "^[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"
         return NSPredicate(format: "SELF MATCHES %@", emailRegex).evaluate(with: email)
     }
 
+    // Handles account creation logic: validates input, prevents duplicates, and stores new profile
     private func handleRegistration() {
         guard pin.allSatisfy({ $0.isNumber }) else {
             alertMessage = "PIN must be numeric."

@@ -8,6 +8,8 @@
 import SwiftUI
 
 struct LoginView: View {
+    // LoginView handles user authentication via a 4-digit PIN. Displays the active user's profile,
+    // PIN entry interface, and navigates to HomeView on successful login or to WelcomeView when switching accounts.
     @State private var pin: String = ""
     @State private var isUserAuthenticated = false
     @State private var alertMessage: String = ""
@@ -17,6 +19,7 @@ struct LoginView: View {
 
     var body: some View {
         NavigationStack {
+            // Layered background with gradient and glassmorphism effect
             ZStack {
                 // Background gradient
                 LinearGradient(
@@ -32,10 +35,11 @@ struct LoginView: View {
                     .opacity(0.7)
                     .ignoresSafeArea()
                 
+                // Main content layout: user info, PIN entry, number pad, and action buttons
                 VStack(spacing: 40) {
                     Spacer()
                     
-                    // User Profile Info
+                    // Displays active user's profile picture and name
                     if let profile = profileManager.activeProfile {
                         HStack(spacing: 16) {
                             ZStack {
@@ -68,7 +72,7 @@ struct LoginView: View {
                         }
                     }
                     
-                    // PIN Entry
+                    // PIN entry prompt and display. Triggers login when 4 digits are entered.
                     VStack(spacing: 24) {
                         Text("Enter Your PIN")
                             .font(.system(size: 16, weight: .medium))
@@ -84,9 +88,10 @@ struct LoginView: View {
                             }
                     }
                     
+                    // Custom number pad for PIN input
                     CustomNumberPad(pin: $pin)
                     
-                    // Action Buttons
+                    // Login and Switch Account buttons. Login is enabled only if PIN has 4 digits.
                     VStack(spacing: 16) {
                         
                         
@@ -127,14 +132,17 @@ struct LoginView: View {
                     
                 }
             }
+            // Alert for incorrect or invalid PIN input
             .alert(isPresented: $showAlert) {
                 Alert(title: Text("Alert"), message: Text(alertMessage), dismissButton: .default(Text("OK")))
             }
+            // Navigate to HomeView on successful login
             .navigationDestination(isPresented: $isUserAuthenticated) {
                 HomeView()
                     .environmentObject(PortfolioViewModel())
                     .navigationBarBackButtonHidden(true)
             }
+            // Navigate to WelcomeView when user opts to switch accounts
             .navigationDestination(isPresented: $navigateToWelcome) {
                 WelcomeView()
                     .navigationBarBackButtonHidden(true)
@@ -142,6 +150,7 @@ struct LoginView: View {
         }
     }
 
+    // Validates PIN and handles login logic based on active profile
     private func handlePinEntry() {
         guard pin.count == 4, pin.allSatisfy({ $0.isNumber }) else {
             pin = ""

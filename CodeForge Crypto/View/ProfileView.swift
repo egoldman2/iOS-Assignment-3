@@ -7,6 +7,9 @@
 
 import SwiftUI
 
+// ProfileView displays account settings and actions for the logged-in user.
+// Includes viewing profile details, recharging account, locking the app,
+// signing out, and permanently deleting the account.
 struct ProfileView: View {
     @ObservedObject private var manager = ProfileManager.shared
     @EnvironmentObject var portfolioVM: PortfolioViewModel
@@ -17,7 +20,7 @@ struct ProfileView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 20) {
-                // Profile Header
+                // Header with profile icon and title
                 HStack {
                     Image(systemName: "person.circle.fill")
                         .font(.largeTitle)
@@ -29,7 +32,7 @@ struct ProfileView: View {
                 }
                 .padding()
                 
-                // User Info Card
+                // User information card showing avatar, name, email, and PIN hint
                 VStack(spacing: 15) {
                     // Avatar
                     ZStack {
@@ -67,7 +70,7 @@ struct ProfileView: View {
                 .cornerRadius(15)
                 .padding(.horizontal)
                 
-                // Action Buttons
+                // Action buttons: Recharge, Lock App, Sign Out, and Delete Account
                 VStack(spacing: 12) {
                     // Recharge Button
                     NavigationLink(destination: RechargeView().environmentObject(portfolioVM)) {
@@ -145,6 +148,7 @@ struct ProfileView: View {
                 
                 Spacer()
             }
+            // Confirmation alert shown when attempting to delete account
             .alert("Delete Account", isPresented: $showDeleteConfirmation) {
                 Button("Cancel", role: .cancel) { }
                 Button("Delete", role: .destructive) {
@@ -153,10 +157,12 @@ struct ProfileView: View {
             } message: {
                 Text("Are you sure you want to permanently delete your account? This action cannot be undone.")
             }
+            // Navigate to WelcomeView after sign-out or account deletion
             .navigationDestination(isPresented: $navigateToWelcome) {
                 WelcomeView()
                     .navigationBarBackButtonHidden(true)
             }
+            // Navigate to LoginView when locking the app
             .navigationDestination(isPresented: $navigateToPinLock) {
                 LoginView()
                     .navigationBarBackButtonHidden(true)
@@ -164,6 +170,7 @@ struct ProfileView: View {
         }
     }
     
+    // Clears current profile and navigates to welcome screen
     private func signOut() {
         manager.activeProfile = nil
         UserDefaults.standard.removeObject(forKey: "active_profile")
@@ -171,6 +178,7 @@ struct ProfileView: View {
         navigateToWelcome = true
     }
     
+    // Deletes user profile and associated data, then navigates to welcome screen
     private func deleteAccount() {
         guard let email = manager.activeProfile?.email else { return }
         manager.deleteProfile(email: email)
