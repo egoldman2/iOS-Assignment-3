@@ -1,6 +1,6 @@
 # iOS-Assignment-3
 ## GitHub Repository
-https://github.com/your-group-name/project-name
+https://github.com/egoldman2/iOS-Assignment-3.git
 
 
 # CodeForge Crypto
