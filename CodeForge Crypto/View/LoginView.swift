@@ -37,7 +37,7 @@ struct LoginView: View {
                     
                     // User Profile Info
                     if let profile = profileManager.activeProfile {
-                        VStack(spacing: 16) {
+                        HStack(spacing: 16) {
                             ZStack {
                                 Circle()
                                     .fill(
@@ -49,19 +49,22 @@ struct LoginView: View {
                                     )
                                     .frame(width: 100, height: 100)
                                     .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 5)
-                                
+
                                 Text(profile.name.prefix(1).uppercased())
                                     .font(.system(size: 40, weight: .bold, design: .rounded))
                                     .foregroundColor(.purple)
                             }
+
+                            VStack {
+                                Text("Welcome back")
+                                    .font(.system(size: 18, weight: .medium))
+                                    .foregroundColor(.white.opacity(0.8))
+                                Text(profile.name)
+                                    .font(.system(size: 28, weight: .bold, design: .rounded))
+                                    .foregroundColor(.white)
+                            }
+
                             
-                            Text("Welcome back")
-                                .font(.system(size: 18, weight: .medium))
-                                .foregroundColor(.white.opacity(0.8))
-                            
-                            Text(profile.name)
-                                .font(.system(size: 28, weight: .bold, design: .rounded))
-                                .foregroundColor(.white)
                         }
                     }
                     
@@ -73,26 +76,20 @@ struct LoginView: View {
                         
                         // Custom PIN View with modern styling
                         PinView(pin: $pin)
+                            .disabled(true)
                             .onChange(of: pin) { _, _ in
                                 if pin.count == 4 {
                                     handlePinEntry()
                                 }
                             }
-                        
-                        // PIN progress indicator
-                        HStack(spacing: 4) {
-                            ForEach(0..<4) { index in
-                                Circle()
-                                    .fill(index < pin.count ? Color.white : Color.white.opacity(0.3))
-                                    .frame(width: 8, height: 8)
-                            }
-                        }
                     }
                     
-                    Spacer()
+                    CustomNumberPad(pin: $pin)
                     
                     // Action Buttons
                     VStack(spacing: 16) {
+                        
+                        
                         Button(action: {
                             handlePinEntry()
                         }) {
@@ -126,6 +123,8 @@ struct LoginView: View {
                     }
                     .padding(.horizontal, 40)
                     .padding(.bottom, 50)
+                    
+                    
                 }
             }
             .alert(isPresented: $showAlert) {
