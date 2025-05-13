@@ -10,6 +10,7 @@ struct RegistrationView: View {
     @FocusState private var nameFocused: Bool
     @FocusState private var emailFocused: Bool
     @FocusState private var pinFocused: Bool
+    @State private var showEmailError = false
 
     var body: some View {
         ZStack {
@@ -95,6 +96,15 @@ struct RegistrationView: View {
                                 .cornerRadius(12)
                                 .foregroundColor(.white)
                                 .accentColor(.white)
+                                .onChange(of: email) { _, newValue in
+                                    showEmailError = !isValidEmail(newValue)
+                                }
+                            
+                            if showEmailError && !email.isEmpty {
+                                Text("Please enter a valid email address.")
+                                    .font(.system(size: 12))
+                                    .foregroundColor(.red)
+                            }
                         }
                         
                         // PIN Field
@@ -207,7 +217,12 @@ struct RegistrationView: View {
     }
 
     private var isValidInput: Bool {
-        !name.isEmpty && !email.isEmpty && pin.count == 4
+        !name.isEmpty && isValidEmail(email) && pin.count == 4
+    }
+
+    private func isValidEmail(_ email: String) -> Bool {
+        let emailRegex = "^[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"
+        return NSPredicate(format: "SELF MATCHES %@", emailRegex).evaluate(with: email)
     }
 
     private func handleRegistration() {
